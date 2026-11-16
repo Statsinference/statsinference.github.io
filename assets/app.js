@@ -16,7 +16,7 @@ const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>typeof v==='number'&&Number.isFinite(v);
 const KNOWN=new Set(DOMAINS.map(d=>d.id)),GROUPS=['ID','OOD'];
-const COLS=[{k:'group',label:'Group'},{k:'method',label:'Method'},{k:'bias',label:'Bias',hint:'Signed bias. Sorting uses absolute bias; zero is the reference.'},{k:'variance',label:'Variance',hint:'Within-mechanism sampling variance, not standard error.'},{k:'rmse',label:'RMSE',hint:'Lower is better for the same target and evaluation suite.'},{k:'length',label:'Length',hint:'Mean confidence interval length. Interpret jointly with coverage.'},{k:'coverage',label:'Coverage',hint:'Compare with the nominal level; higher is not automatically better.'},{k:'time_s',label:'Time (s)',hint:'Reported runtime per table. Check hardware and timing scope.'}];
+const COLS=[{k:'group',label:'Group'},{k:'method',label:'Method'},{k:'bias',label:'Bias',hint:'Signed bias. Sorting uses absolute bias; zero is the reference.'},{k:'variance',label:'Variance',hint:'Source-specific variance definition; see the evaluation note. This is not always within-mechanism sampling variance.'},{k:'rmse',label:'RMSE',hint:'Lower is better for the same target and evaluation suite.'},{k:'length',label:'Length',hint:'Mean confidence interval length. Interpret jointly with coverage.'},{k:'coverage',label:'Coverage',hint:'Compare with the nominal level; higher is not automatically better.'},{k:'time_s',label:'Time (s)',hint:'Reported runtime per table. Check hardware and timing scope.'}];
 let DATA={schema_version:1,suites:[]},task='mediation',split='both',family='all',query='',suiteId='',sortKey='rmse',sortDir=1,loadError='';
 function validate(data){
  if(data?.schema_version!==1||!Array.isArray(data.suites))throw Error('Unsupported results schema');
@@ -41,8 +41,9 @@ function rows(useSplit=true){return (current()?.rows||[]).filter(r=>(family==='a
 function fmt(n,signed=false){if(!number(n))return '—';const a=Math.abs(n),v=a!==0&&(a>=10000||a<.0001)?a.toExponential(2):a>=100?a.toLocaleString('en-US',{maximumFractionDigits:3}):a.toFixed(3);return (n<0?'−':signed&&n>0?'+':'')+v;}
 const metric=(r,k)=>{
  if(!number(r[k]))return '—';
+ if(r.display&&typeof r.display[k]==='string')return esc(r.display[k]);
  if(k==='coverage')return (r[k]*100).toFixed(2)+'%';
- const v=r[k],a=Math.abs(v),digits=k==='time_s'?3:k==='variance'?5:4;
+ const v=r[k],a=Math.abs(v),digits=k==='time_s'?(r.time_digits??3):k==='variance'?5:4;
  const text=a!==0&&(a>=10000||a<.0001)?a.toExponential(2):a.toFixed(digits);
  return (k==='variance'&&r.variance_is_approximate?'≈':'')+(v<0?'−':k==='bias'&&v>0?'+':'')+text;
 };
@@ -95,8 +96,8 @@ $('#thead').addEventListener('click',e=>{const b=e.target.closest('[data-sort]')
 function csvCell(value){const s=typeof value==='string'&&/^[=+@\t\r-]/.test(value)?"'"+value:String(value??'');return '"'+s.replace(/"/g,'""')+'"';}
 $('#export-btn').addEventListener('click',()=>{
  const rr=rows();if(!rr.some(r=>r.status!=='not_reported'))return;
- const keys=[...COLS.map(c=>c.k),'reported_se','variance_is_approximate','variance_basis','status','suite_id','source_date'];
- const out=groups().flatMap(g=>rr.filter(r=>r.group===g).sort(compare)).map(r=>({...r,suite_id:current()?.id,source_date:current()?.report_date}));
+ const keys=[...COLS.map(c=>c.k),'reported_se','variance_is_approximate','variance_basis','status','suite_id','source_date','variance_kind','metric_scale','nominal_coverage','timing_scope','source_file'];
+ const out=groups().flatMap(g=>rr.filter(r=>r.group===g).sort(compare)).map(r=>({...r,suite_id:current()?.id,source_date:current()?.report_date,variance_kind:current()?.variance_kind,metric_scale:current()?.metric_scale,nominal_coverage:current()?.nominal_coverage,timing_scope:current()?.timing_scope,source_file:current()?.source?.file}));
  const text=[keys.join(','),...out.map(r=>keys.map(k=>csvCell(r[k])).join(','))].join('\r\n');
  const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');
  a.href=url;a.download='statistical-inference-arena-'+task+'-'+split+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
