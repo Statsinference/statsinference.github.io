@@ -45,11 +45,11 @@
 <section class="arena-overview" aria-label="Current leaderboard overview">
 <div id="arena-overview-stats" class="arena-stat-grid" aria-live="polite">
 <article class="arena-stat"><strong data-overview-stat="domains">—</strong><span>Research areas</span><small>Including areas in development</small></article>
-<article class="arena-stat"><strong data-overview-stat="active-domains">—</strong><span>Areas with results</span><small>Current leaderboards</small></article>
-<article class="arena-stat"><strong data-overview-stat="method-entries">—</strong><span>Method entries</span><small>Counted within each area</small></article>
+<article class="arena-stat"><strong data-overview-stat="registered-dgps">—</strong><span>Registered DGPs</span><small data-dgp-snapshot>Catalog records, pending review</small></article>
+<article class="arena-stat"><strong data-overview-stat="displayed-methods">—</strong><span>Displayed methods</span><small>Names deduplicated across areas</small></article>
 <article class="arena-stat"><strong data-overview-stat="metrics">—</strong><span>Inference metrics</span><small>Accuracy, uncertainty and time</small></article>
 </div>
-<p class="arena-overview-note">Counts describe the currently displayed leaderboards; method entries are counted separately in each research area.</p>
+<p class="arena-overview-note">Method names are counted once across areas. Baseline is one displayed name; its implementation can vary by area.</p>
 </section>
 <span id="release-status" hidden></span>
 <p id="release-description" role="status" hidden></p>
@@ -75,7 +75,7 @@
 <noscript><p class="noscript">Enable JavaScript to view the domain leaderboards. Source-reported results are available for Average Treatment Effect, Conditional Average Treatment Effect, Causal Mediation Analysis, Instrumental Variables, Proximal Causal Inference and Difference-in-Differences. <a href="data/results.json">Read the results data</a>.</p></noscript>
 <script src="assets/test-references.js?v=overview-20261117"></script>
 <script src="assets/test-view.js?v=overview-20261117"></script>
-<script src="assets/arena-overview.js?v=overview-20261117"></script>
+<script src="assets/arena-overview.js?v=overview-counts-20261117"></script>
 <script src="assets/layout.js?v=overview-20261117"></script>
 <script src="assets/submit-method.js?v=overview-20261117"></script>
 <script src="assets/comparison-charts.js?v=overview-20261117"></script>
