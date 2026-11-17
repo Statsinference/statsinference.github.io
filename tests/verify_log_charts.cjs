@@ -53,6 +53,19 @@ const plot = hosts['rmse-time-chart'].children[0];
 const points = plot.children.filter(x=>x.attrs.class?.startsWith('chart-point'));
 assert.equal(points.length,3);
 const coordinates = points.map(p=>p.attrs.transform.match(/translate\(([-.\d]+) ([-.\d]+)\)/).slice(1).map(Number));
+for (const chart of [plot, hosts['coverage-length-chart'].children[0]]) {
+  const guide = chart.children.find(x=>x.attrs.class==='chart-guidance');
+  assert(guide, 'in-plot guidance must be rendered in the SVG');
+  assert.equal(guide.children.filter(x=>x.attrs.class==='chart-guidance-arrow').length, 2);
+  const [left,top,width,height] = ['data-plot-left','data-plot-top','data-plot-width','data-plot-height'].map(k=>Number(chart.attrs[k]));
+  const [x,y,w,h] = ['data-x','data-y','data-width','data-height'].map(k=>Number(guide.attrs[k]));
+  assert(x>=left && y>=top && x+w<=left+width && y+h<=top+height);
+  for (const point of chart.children.filter(x=>x.attrs.class?.startsWith('chart-point'))) {
+    const [cx,cy]=point.attrs.transform.match(/translate\\(([-.\\d]+) ([-.\\d]+)\\)/).slice(1).map(Number);
+    const gapX=Math.max(x-cx,0,cx-(x+w)),gapY=Math.max(y-cy,0,cy-(y+h));
+    assert(Math.hypot(gapX,gapY)>=5.5,'guide must not cover data markers');
+  }
+}
 for (const axis of [0,1]) {
   const [a,b,c] = coordinates.map(p=>p[axis]);
   assert(Math.abs((b-a)-(c-b)) < 1e-8, 'each decade must have equal spacing');
