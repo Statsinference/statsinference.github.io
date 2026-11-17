@@ -20,3 +20,5 @@
 @media(max-width:380px){.method-submit-button{padding:6px 8px}#method-submit-dialog{padding:21px}}
 @media print{#method-submit-dialog,.method-submit-button{display:none!important}}
 @media(max-width:380px){.topbar:has(#submit-method-btn){gap:6px}.topbar-actions:has(#submit-method-btn){gap:4px}.method-submit-button{padding:6px 5px}}
+
+#method-submit-dialog select{width:100%;border:1px solid var(--line-strong);border-radius:5px;background:var(--bg);color:var(--fg);padding:11px;font-size:13px;min-width:0;margin-bottom:18px}
