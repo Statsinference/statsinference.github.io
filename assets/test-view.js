@@ -117,8 +117,8 @@ function methodFacts(r,s){
  if(['ate-fixed-collection-report','cate-fixed-collection-report'].includes(s.id)){
   if(baseline){
    estimator=s.domain==='ate'?'AIPW with treatment-stratified cross-fitting':'T-learner ensemble';
-   folds='5';bootstrap='50 full row-bootstrap refits; 95% percentile intervals';
-   configuration='200 trees; minimum leaf size 5; n_jobs=1; scikit-learn 1.7.2; grouped treatment-stratified bootstrap resplits'+(s.domain==='ate'?'; propensity clipping 0.01–0.99':'; fixed CATE query');
+   folds='5';bootstrap='50';
+   configuration='200 trees; minimum leaf size 5; n_jobs=1; scikit-learn 1.7.2; 95% percentile intervals; grouped treatment-stratified bootstrap resplits'+(s.domain==='ate'?'; propensity clipping 0.01–0.99':'; fixed CATE query');
   }else{
    estimator='CausalPFN 0.1.5; official causalpfn_v0.pt weights';
    folds='Native workflow; no additional five-fold wrapper';
@@ -126,7 +126,7 @@ function methodFacts(r,s){
   }
  }else if(s.id==='mediation-fivefold-2026-11-16'){
   folds='5 treatment-stratified folds';
-  if(baseline){estimator='Cross-fitted EIF for NIE₁';folds='5 treatment-stratified outer folds; 2 inner pseudo-label folds';bootstrap='50 full row-bootstrap refits; 95% percentile interval';configuration='Random forest classifiers/regressors: 200 trees; minimum leaf size 5; n_jobs=1; propensity clipping 0.01–0.99; scikit-learn 1.7.2';}
+  if(baseline){estimator='Cross-fitted EIF for NIE';folds='5 treatment-stratified outer folds; 2 inner pseudo-label folds';bootstrap='50';configuration='Random forest classifiers/regressors: 200 trees; minimum leaf size 5; n_jobs=1; propensity clipping 0.01–0.99; scikit-learn 1.7.2; 95% percentile interval';}
   else configuration='Checkpoint trained with two folds; evaluated with five folds without recalibration';
  }else if(s.id==='iv-v03-test'){
   folds='5 (as stated in the supplied results)';
@@ -134,10 +134,10 @@ function methodFacts(r,s){
   else estimator='IV-PFN v0.3';
  }else if(s.id==='did-test-2026-11-16'){
   estimator='Normalized DR-DiD score';folds='5';
-  if(baseline){bootstrap='50 full row-bootstrap refits with new splits';configuration='Propensity classification and outcome-change regression forests: 200 trees; minimum leaf size 5; 95% normal interval using bootstrap standard errors';}
+  if(baseline){bootstrap='50';configuration='Propensity classification and outcome-change regression forests: 200 trees; minimum leaf size 5; resampling with new splits; 95% normal interval using bootstrap standard errors';}
   else configuration='Frozen TabPFN-3.5 with residual adapters; 95% normal interval using influence-function standard errors';
  }else if(s.id==='proximal-unified-2026-11-16-normalized'){
-  if(baseline){estimator='Proximal series-IV / sieve-GMM with RF nuisance models';folds='5-fold out-of-fold E[W, W² | A, X, Z] predictions';bootstrap='50 full-pipeline row-bootstrap refits; 95% percentile interval';configuration='RF nuisance and W | X query models: 200 trees; minimum leaf size 5; n_jobs=1; scikit-learn 1.7.2; 20-column quadratic bridge; ridge 10⁻⁴ and instrument ridge 10⁻⁶';}
+  if(baseline){estimator='Proximal series-IV / sieve-GMM with RF nuisance models';folds='5-fold out-of-fold E[W, W² | A, X, Z] predictions';bootstrap='50';configuration='RF nuisance and W | X query models: 200 trees; minimum leaf size 5; n_jobs=1; scikit-learn 1.7.2; 20-column quadratic bridge; ridge 10⁻⁴ and instrument ridge 10⁻⁶; full-pipeline resampling; 95% percentile interval';}
   else{folds='Five-context distribution mixture; not nuisance cross-fitting';configuration='Interval: quantiles of the five-context mixture distribution';}
  }else configuration=r.configuration||'';
  return [['Method',name],['Estimator / model',estimator],['Folds / contexts',folds],['Bootstrap',bootstrap],['Configuration',configuration||'Not reported']];
@@ -225,7 +225,7 @@ const expectation=(inside)=>`<mi mathvariant="double-struck">E</mi><mo>[</mo>${i
 const targetDefinitions={
  ate:mml('<mi>ATE</mi><mo>=</mo>'+expectation(meanContrast),'ATE equals the expected difference between potential outcomes under treatment and control'),
  cate:mml('<mi>CATE</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo>'+expectation(meanContrast+'<mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi>'),'CATE at x equals the expected treatment effect conditional on X equals x'),
- mediation:mml('<msub><mi>NIE</mi><mn>1</mn></msub><mo>=</mo>'+expectation('<mi>Y</mi><mo>(</mo><mn>1</mn><mo>,</mo><mi>M</mi><mo>(</mo><mn>1</mn><mo>)</mo><mo>)</mo><mo>−</mo><mi>Y</mi><mo>(</mo><mn>1</mn><mo>,</mo><mi>M</mi><mo>(</mo><mn>0</mn><mo>)</mo><mo>)</mo>'),'Natural indirect effect at treatment level one'),
+ mediation:mml('<mi>NIE</mi><mo>=</mo>'+expectation('<mi>Y</mi><mo>(</mo><mn>1</mn><mo>,</mo><mi>M</mi><mo>(</mo><mn>1</mn><mo>)</mo><mo>)</mo><mo>−</mo><mi>Y</mi><mo>(</mo><mn>1</mn><mo>,</mo><mi>M</mi><mo>(</mo><mn>0</mn><mo>)</mo><mo>)</mo>'),'Natural indirect effect at treatment level one'),
  proximal:mml('<mi>CATE</mi><mo>(</mo><msup><mi>x</mi><mo>∗</mo></msup><mo>)</mo><mo>=</mo>'+expectation(meanContrast+'<mo>∣</mo><mi>X</mi><mo>=</mo><msup><mi>x</mi><mo>∗</mo></msup>'),'CATE at the query point x star'),
  did_sc:mml('<mi>ATT</mi><mo>=</mo>'+expectation('<msub><mi>Y</mi><mtext>post</mtext></msub><mo>(</mo><mn>1</mn><mo>)</mo><mo>−</mo><msub><mi>Y</mi><mtext>post</mtext></msub><mo>(</mo><mn>0</mn><mo>)</mo><mo>∣</mo><mi>A</mi><mo>=</mo><mn>1</mn>'),'Average treatment effect on the treated in the post period')
 };
