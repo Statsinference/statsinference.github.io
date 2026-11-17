@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f5f1ec">
-<meta name="description" content="Statistical Inference Arena — leaderboards across ten research domains. Compare Bias, Variance, RMSE, interval Length, Coverage and Time on the Test evaluation.">
+<meta name="description" content="Statistical Inference Arena — leaderboards across ten research domains. Compare bias, variance, RMSE, mean interval length, coverage and time.">
 <meta property="og:title" content="Statistical Inference Arena">
 <meta property="og:description" content="Accuracy, uncertainty and efficiency. Independent statistical inference leaderboards across ten domains.">
 <meta property="og:image" content="https://statsinference.github.io/assets/statsarena-logo.webp">
@@ -19,16 +19,16 @@
 <link rel="stylesheet" href="assets/site.css?v=arena-2">
 <link rel="stylesheet" href="assets/release.css?v=multidomain-2">
 <link rel="stylesheet" href="assets/references.css?v=1">
-<link rel="stylesheet" href="assets/test-view.css?v=single-table-1">
+<link rel="stylesheet" href="assets/test-view.css?v=merged-details-20261117">
 <link rel="stylesheet" href="assets/submit-method.css?v=black-submit-1">
-<link rel="stylesheet" href="assets/comparison-charts.css?v=1">
-<link rel="stylesheet" href="assets/domain-illustrations.css?v=1">
+<link rel="stylesheet" href="assets/comparison-charts.css?v=merged-details-20261117">
+<link rel="stylesheet" href="assets/domain-illustrations.css?v=merged-details-20261117">
 </head>
 <body>
 <a class="skip" href="#main-panel">Skip to leaderboard</a>
 <button class="scrim" id="menu-scrim" aria-label="Close navigation" hidden></button>
 <aside class="sidebar" id="sidebar" aria-label="Site navigation">
-<a class="brand" href="#domain=mediation"><img class="brand-logo" src="assets/statsarena-logo.webp" alt="Statistical Inference Arena logo" width="42" height="42"><span class="brand-name">Statistical<br>Inference Arena<small>ESTIMATION · UNCERTAINTY</small></span></a>
+<a class="brand" href="#domain=ate"><img class="brand-logo" src="assets/statsarena-logo.webp" alt="Statistical Inference Arena logo" width="42" height="42"><span class="brand-name">Statistical<br>Inference Arena<small>ESTIMATION · UNCERTAINTY</small></span></a>
 <a class="side-home" href="#main-panel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m6 10V4m6 15v-7M2 21h20"/></svg>Leaderboards<span>↗</span></a>
 <div class="nav-caption">RESEARCH DOMAINS <span>10</span></div>
 <div id="tabs" role="tablist" aria-label="Research domains" aria-orientation="vertical"></div>
@@ -40,35 +40,35 @@
 <div class="page">
 <header class="topbar"><div class="topbar-left"><button class="menu-button" id="menu-btn" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">☰</button><span>Leaderboards</span><span class="breadcrumb-sep">/</span><span class="muted">Statistical inference</span></div><div class="topbar-actions"><button class="theme-toggle" id="theme-btn" aria-label="Switch to dark theme" title="Switch color theme">◐</button><button type="button" class="method-submit-button" id="submit-method-btn" aria-haspopup="dialog" aria-controls="method-submit-dialog" aria-expanded="false">Submit your method</button></div></header>
 <div class="content">
-<section class="page-heading with-domain-illustration" aria-label="About Statistical Inference Arena"><div><div class="eyebrow">STATISTICAL INFERENCE ARENA</div><h1>Statistical<br><em>Inference Arena.</em></h1></div><figure id="domain-illustration" class="domain-figure" aria-labelledby="domain-figure-title" hidden></figure></section>
+<section class="page-heading with-domain-illustration" aria-label="About Statistical Inference Arena"><div><h1>Statistical<br><em>Inference Arena.</em></h1></div><figure id="domain-illustration" class="domain-figure" aria-labelledby="domain-figure-title" hidden></figure></section>
 <span id="release-status" hidden></span>
 <p id="release-description" role="status" hidden></p>
-<main id="main-panel" role="tabpanel" aria-labelledby="tab-mediation" tabindex="-1">
-<section class="domain-heading"><div><div class="section-label">DOMAIN LEADERBOARD</div><h2 id="hero-title">Causal Mediation</h2><p id="hero-sub">Statistical inference for explicitly defined direct, indirect, and mediation targets.</p></div><a href="#table" class="text-link">Full leaderboard <span>↘</span></a></section>
-<section class="view-bar test-controls" aria-label="Test results controls">
-<span class="test-label">TEST</span>
-<div class="chips" id="fam-chips" role="group" aria-label="Method family"><button class="chip on" data-fam="all" aria-pressed="true">All methods</button><button class="chip" data-fam="pfn" aria-pressed="false">PFN</button><button class="chip" data-fam="classical" aria-pressed="false">RF + bootstrap</button></div>
-<label class="rank-control" for="rank-metric">Rank by <select id="rank-metric" aria-label="Rank by metric"><option value="bias">Bias</option><option value="variance">Variance</option><option value="rmse" selected>RMSE</option><option value="length">Length</option><option value="coverage">Coverage</option><option value="time_s">Time</option></select></label>
+<main id="main-panel" role="tabpanel" aria-labelledby="tab-ate" tabindex="-1">
+<section class="domain-heading"><div><h2 id="hero-title">Average Treatment Effect</h2><p id="hero-sub">Point estimates and confidence intervals for average treatment effects.</p><div id="domain-definition" class="domain-definition" aria-label="Target definition"></div></div><a href="#table" class="text-link">Full leaderboard <span>↘</span></a></section>
+<section id="coming-soon" class="coming-soon" role="status" hidden><h3>Coming soon</h3><p>Results for this research area are being prepared.</p></section>
+<section class="view-bar test-controls" aria-label="Leaderboard controls">
+<div class="chips" id="fam-chips" role="group" aria-label="Method family"><button class="chip on" data-fam="all" aria-pressed="true">All methods</button><button class="chip" data-fam="pfn" aria-pressed="false">RFN</button><button class="chip" data-fam="classical" aria-pressed="false">Baseline</button></div>
+<label class="rank-control" for="rank-metric">Rank by <select id="rank-metric" aria-label="Rank by metric"><option value="bias">Bias</option><option value="variance">Variance</option><option value="rmse" selected>RMSE</option><option value="length">Mean interval length</option><option value="coverage">Coverage</option><option value="time_s">Time</option></select></label>
 <label class="search"><input id="q" type="search" placeholder="Search methods" aria-label="Search methods"></label>
 <button class="export" id="export-btn" disabled>Export CSV ↓</button>
 </section>
-<section id="table" aria-label="Test leaderboard"><div id="leaderboard-wrap" class="leaderboard-wrap" tabindex="0" role="region" aria-label="Scrollable Test leaderboard" aria-live="polite"></div><p class="table-note" id="table-note"></p></section>
-<details id="method-references" class="method-references" hidden><summary>Method references</summary><div id="reference-list" class="reference-list"></div></details>
+<section id="table" aria-label="Leaderboard"><div id="leaderboard-wrap" class="leaderboard-wrap" tabindex="0" role="region" aria-label="Scrollable leaderboard" aria-live="polite"></div><p class="table-note" id="table-note"></p></section>
 <div class="registry-row"><a id="registry-link" target="_blank" rel="noopener noreferrer">Browse DGP registry ↗</a><span>Research repository access required.</span></div>
 </main>
-<section id="methodology" class="comparison-charts" aria-label="Test result comparisons">
+<section id="methodology" class="comparison-charts" aria-label="Result comparisons">
 <article class="comparison-card" aria-labelledby="rmse-time-title"><h3 id="rmse-time-title">RMSE vs Time</h3><div id="rmse-time-chart" class="comparison-plot"></div></article>
-<article class="comparison-card" aria-labelledby="coverage-length-title"><h3 id="coverage-length-title">Coverage vs Length</h3><div id="coverage-length-chart" class="comparison-plot"></div></article>
+<article class="comparison-card" aria-labelledby="coverage-length-title"><h3 id="coverage-length-title">Coverage vs Mean Interval Length</h3><div id="coverage-length-chart" class="comparison-plot"></div></article>
 </section>
-<footer><a class="footer-brand" href="#domain=mediation"><img src="assets/statsarena-logo.webp" alt="" width="24" height="24">Statistical Inference Arena</a><span>Statistical Inference Arena</span><a href="https://github.com/Statsinference/statsinference.github.io" target="_blank" rel="noopener noreferrer">Website source ↗</a></footer>
+<footer><a class="footer-brand" href="#domain=ate"><img src="assets/statsarena-logo.webp" alt="" width="24" height="24">Statistical Inference Arena</a><a href="https://github.com/Statsinference/statsinference.github.io" target="_blank" rel="noopener noreferrer">Website source ↗</a></footer>
 </div></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-<noscript><p class="noscript">Enable JavaScript to view the domain leaderboards. Source-reported results are available for Average Treatment Effect, Conditional Average Treatment Effect, Causal Mediation, Instrumental Variables, Proximal Causal Inference and Difference-in-Differences. <a href="data/results.json">Read the results data</a>.</p></noscript>
-<script src="assets/test-references.js?v=iv-v03-1"></script>
-<script src="assets/test-view.js?v=causal-mediation-1"></script>
+<noscript><p class="noscript">Enable JavaScript to view the domain leaderboards. Source-reported results are available for Average Treatment Effect, Conditional Average Treatment Effect, Causal Mediation Analysis, Instrumental Variables, Proximal Causal Inference and Difference-in-Differences. <a href="data/results.json">Read the results data</a>.</p></noscript>
+<script src="assets/test-references.js?v=merged-details-20261117"></script>
+<script src="assets/test-view.js?v=merged-details-20261117"></script>
 <script src="assets/layout.js?v=arena-2"></script>
 <script src="assets/submit-method.js?v=github-intake-1"></script>
-<script src="assets/comparison-charts.js?v=1"></script>
-<script src="assets/domain-illustrations.js?v=1"></script>
+<script src="assets/comparison-charts.js?v=merged-details-20261117"></script>
+<script src="assets/domain-illustrations.js?v=merged-details-20261117"></script>
 </body></html>
+
 

@@ -1,7 +1,8 @@
 /* Theme-aware schematic cards. Styles are scoped to this new component. */
-.page-heading.with-domain-illustration{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,430px);gap:28px;align-items:center}
-.domain-figure{margin:0;width:100%;min-width:0;padding:16px 20px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--fg);--di-ink:var(--muted);--di-accent:var(--pfn);--di-node:var(--bg)}
-.domain-figure-title{font:500 20px/1.2 var(--display);letter-spacing:-.35px;margin:0 0 12px;max-width:100%}
+.page-heading.with-domain-illustration{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,360px);gap:24px;align-items:center;padding:27px 0 18px}
+.page-heading.with-domain-illustration h1{margin:8px 0;line-height:1.06}
+.domain-figure{margin:0;width:100%;min-width:0;padding:14px 18px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);--di-ink:var(--muted);--di-accent:var(--pfn);--di-node:var(--bg)}
+.domain-figure-title{font:500 18px/1.2 var(--display);letter-spacing:-.3px;margin:0 0 9px;max-width:100%}
 .domain-figure-title::after{content:'';display:block;width:25px;height:2px;background:var(--di-accent);opacity:.75;margin-top:9px}
 .domain-figure svg{display:block;width:100%;height:auto;overflow:visible}
 .domain-figure svg text{fill:var(--fg);font:11px var(--body)}
@@ -26,7 +27,8 @@
 .domain-figure .di-open-dot{fill:var(--surface);stroke:var(--di-accent);stroke-width:1}
 .domain-figure .di-scatter{fill:var(--di-accent);opacity:.32}
 .domain-figure .di-missing-cell{fill:var(--surface);stroke:var(--line-strong);stroke-dasharray:3 3}
-@media(max-width:1100px){.page-heading.with-domain-illustration{grid-template-columns:minmax(0,1fr) minmax(280px,380px);gap:20px}.domain-figure{padding:14px 15px 10px}.domain-figure-title{font-size:18px}}
+@media(max-width:1100px){.page-heading.with-domain-illustration{grid-template-columns:minmax(0,1fr) minmax(240px,330px);gap:20px}.domain-figure{padding:13px 15px 9px}.domain-figure-title{font-size:17px}}
 @media(min-width:861px) and (max-width:1000px){.page-heading.with-domain-illustration h1{font-size:34px}}
-@media(max-width:700px){.page-heading.with-domain-illustration{grid-template-columns:1fr;gap:12px}.domain-figure{max-width:430px;justify-self:end}.domain-figure-title{font-size:19px}}
+@media(max-width:700px){.page-heading.with-domain-illustration{grid-template-columns:1fr;gap:14px;padding:23px 0 15px}.page-heading.with-domain-illustration h1{margin:0}.domain-figure{max-width:360px;justify-self:start}.domain-figure-title{font-size:17px}}
 @media print{.domain-figure{break-inside:avoid}}
+

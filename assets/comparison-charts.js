@@ -6,27 +6,29 @@
   if (!section || !table || typeof visibleRows !== 'function') return;
   const NS = 'http://www.w3.org/2000/svg';
   const charts = [
-    {id:'rmse-time-chart', x:'time_s', y:'rmse', xLabel:'Time (s)', yLabel:'RMSE', title:'RMSE vs Time'},
-    {id:'coverage-length-chart', x:'length', y:'coverage', xLabel:'Length', yLabel:'Coverage (%)', title:'Coverage vs Length'}
+    {id:'rmse-time-chart', x:'time_s', y:'rmse', xLabel:'Time (s, log scale)', yLabel:'RMSE (log scale)', title:'RMSE vs Time'},
+    {id:'coverage-length-chart', x:'length', y:'coverage', xLabel:'Mean interval length (log scale)', yLabel:'Coverage (%, log scale)', title:'Coverage vs Mean Interval Length'}
   ];
   const numeric = value => typeof value === 'number' && Number.isFinite(value);
   const familyClass = row => ['pfn','classical'].includes(row.family) ? row.family : 'other';
-  const methodName = row => row.family === 'classical' ? 'RF + bootstrap' : row.method;
+  const methodName = row => row.family === 'classical' ? 'Baseline' : row.method;
   function svgElement(tag, attrs = {}, text) {
     const node = document.createElementNS(NS, tag);
     for (const [key,value] of Object.entries(attrs)) node.setAttribute(key, String(value));
     if (text !== undefined) node.textContent = text;
     return node;
   }
-  // Linear, zero-based axes. Choose readable tick spacing and leave headroom above each point.
-  function axis(maximum) {
-    if (!numeric(maximum) || maximum <= 0) return {max:1, ticks:[0,.25,.5,.75,1]};
-    const raw = maximum * 1.12 / 4;
-    const power = 10 ** Math.floor(Math.log10(raw));
-    const fraction = raw / power;
-    const step = ([1,2,2.5,5,10].find(n => n >= fraction) || 10) * power;
-    const count = Math.ceil(maximum * 1.12 / step);
-    return {max:count * step, ticks:Array.from({length:count+1}, (_,i) => i * step)};
+  // Positive values only: spacing is proportional to log10(value), not value.
+  // Include any positive reference value, then add modest breathing room.
+  function logAxis(values, upperLimit = Infinity) {
+    const logs = values.map(Math.log10);
+    const low = Math.min(...logs), high = Math.max(...logs);
+    const padding = Math.max((high-low)*0.12, 0.035);
+    let min = Math.max(low-padding, Math.log10(Number.MIN_VALUE));
+    let max = Math.min(high+padding, Math.log10(Math.min(upperLimit, Number.MAX_VALUE)));
+    if (!(max > min)) min = max - 0.07;
+    const ticks = Array.from({length:5}, (_,i) => 10 ** (min + (max-min)*i/4));
+    return {min,max,ticks};
   }
   function tick(value) {
     if (value === 0) return '0';
@@ -38,14 +40,23 @@
     if (!host) return;
     const suite = current();
     const candidates = visibleRows();
-    const rows = candidates.filter(row => numeric(row[config.x]) && row[config.x] >= 0 && numeric(row[config.y]) && row[config.y] >= 0 && (config.y !== 'coverage' || row.coverage <= 1));
+    const usable = row => numeric(row[config.x]) && numeric(row[config.y]) && (config.y !== 'coverage' || row.coverage <= 1);
+    const rows = candidates.filter(row => usable(row) && row[config.x] > 0 && row[config.y] > 0);
+    const nonpositive = candidates.filter(row => usable(row) && (row[config.x] <= 0 || row[config.y] <= 0)).length;
+    const unavailable = candidates.length - rows.length - nonpositive;
     host.replaceChildren();
     host.dataset.domain = suite?.domain || task;
     if (!rows.length) {
       const empty = document.createElement('p');
       empty.className = 'chart-empty';
-      empty.textContent = loadError ? 'Results unavailable' : !loaded ? 'Loading results…' : !suite ? 'Results not yet published' : !candidates.length ? 'No methods match the filters.' : 'Results not available for this chart.';
+      empty.textContent = loadError ? 'Results unavailable' : !loaded ? 'Loading results…' : !suite ? 'Results not yet published' : !candidates.length ? 'No methods match the filters.' : nonpositive ? 'No positive values available for a logarithmic chart.' : 'Results not available for this chart.';
       host.append(empty);
+      if (nonpositive || unavailable) {
+        const note = document.createElement('p');
+        note.className = 'chart-note';
+        note.textContent = `${nonpositive} nonpositive and ${unavailable} missing or invalid result(s) omitted.`;
+        host.append(note);
+      }
       return;
     }
     const width = Math.max(240, Math.round(host.getBoundingClientRect().width));
@@ -53,14 +64,15 @@
     const box = {left:57, right:18, top:24, bottom:48};
     const plotW = width - box.left - box.right;
     const plotH = height - box.top - box.bottom;
-    const xAxis = axis(Math.max(...rows.map(row => row[config.x])));
+    const xAxis = logAxis(rows.map(row => row[config.x]));
     const yValue = row => config.y === 'coverage' ? row.coverage * 100 : row[config.y];
-    const yAxis = config.y === 'coverage' ? {max:100, ticks:[0,25,50,75,100]} : axis(Math.max(...rows.map(yValue)));
-    const x = value => box.left + value / xAxis.max * plotW;
-    const y = value => box.top + (1 - value / yAxis.max) * plotH;
+    const nominal = config.y === 'coverage' && numeric(suite.nominal_coverage) && suite.nominal_coverage > 0 && suite.nominal_coverage <= 1 ? suite.nominal_coverage * 100 : config.y === 'coverage' ? 95 : null;
+    const yAxis = logAxis([...rows.map(yValue), ...(nominal ? [nominal] : [])], config.y === 'coverage' ? 100 : Infinity);
+    const x = value => box.left + (Math.log10(value) - xAxis.min) / (xAxis.max-xAxis.min) * plotW;
+    const y = value => box.top + (1 - (Math.log10(value) - yAxis.min) / (yAxis.max-yAxis.min)) * plotH;
     const svg = svgElement('svg', {viewBox:`0 0 ${width} ${height}`, role:'group', 'aria-labelledby':config.id+'-title', 'aria-describedby':config.id+'-desc', 'data-domain':suite.domain});
     svg.append(svgElement('title', {id:config.id+'-title'}, config.title));
-    svg.append(svgElement('desc', {id:config.id+'-desc'}, `${document.getElementById('hero-title').textContent}. Test results for ${rows.map(methodName).join(' and ')}. Both axes are linear.`));
+    svg.append(svgElement('desc', {id:config.id+'-desc'}, `${document.getElementById('hero-title').textContent}. Results for ${rows.map(methodName).join(' and ')}. Both axes use a logarithmic scale.`));
     for (const value of yAxis.ticks) {
       svg.append(svgElement('line',{x1:box.left,y1:y(value),x2:width-box.right,y2:y(value),class:'chart-grid'}));
       svg.append(svgElement('text',{x:box.left-10,y:y(value)+3.5,'text-anchor':'end',class:'chart-tick'},tick(value)));
@@ -73,8 +85,7 @@
     svg.append(svgElement('text',{x:box.left+plotW/2,y:height-8,'text-anchor':'middle',class:'chart-axis-title'},config.xLabel));
     svg.append(svgElement('text',{transform:`translate(14 ${box.top+plotH/2}) rotate(-90)`,'text-anchor':'middle',class:'chart-axis-title'},config.yLabel));
     if (config.y === 'coverage') {
-      const nominal = (numeric(suite.nominal_coverage) ? suite.nominal_coverage : .95) * 100;
-      if (nominal >= 0 && nominal <= 100) {
+      if (nominal > 0 && nominal <= 100) {
         svg.append(svgElement('line',{x1:box.left,y1:y(nominal),x2:width-box.right,y2:y(nominal),class:'chart-reference','data-value':nominal}));
         svg.append(svgElement('text',{x:width-box.right,y:y(nominal)-6,'text-anchor':'end',class:'chart-reference-label'},tick(nominal)+'%'));
       }
@@ -94,6 +105,12 @@
       item.append(marker,document.createTextNode(methodName(row)));legend.append(item);
     }
     host.append(svg,legend);
+    if (nonpositive || unavailable) {
+      const note = document.createElement('p');
+      note.className = 'chart-note';
+      note.textContent = `${nonpositive} nonpositive and ${unavailable} missing or invalid result(s) omitted.`;
+      host.append(note);
+    }
   }
   let frame = 0;
   function schedule() {
@@ -108,3 +125,4 @@
   } else window.addEventListener('resize',schedule);
   schedule();
 })();
+

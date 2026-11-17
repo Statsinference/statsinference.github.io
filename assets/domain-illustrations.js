@@ -6,14 +6,14 @@
   if (!host || !heading) return;
   const titles = Object.freeze({
     ate:'Average Treatment Effect', cate:'Conditional Average Treatment Effect',
-    mediation:'Causal Mediation', iv:'Instrumental Variables', proximal:'Proximal Causal Inference',
+    mediation:'Causal Mediation Analysis', iv:'Instrumental Variables', proximal:'Proximal Causal Inference',
     did_sc:'Difference-in-Differences', nonparametric_regression:'Nonparametric Regression',
     quantile:'Quantile Inference', semi_supervised:'Semi-Supervised Inference', missing_data:'Missing Data'
   });
   const descriptions = {
-    ate:'Covariates X affect treatment A and outcome Y. The treatment also affects the outcome.',
-    cate:'Two treatment-specific response curves, with their contrast marked at a fixed covariate value.',
-    mediation:'Treatment A affects outcome Y both directly and through mediator M. Baseline covariates X point to A, M and Y.',
+    ate:'Confounder X affects treatment A and outcome Y. The treatment also affects the outcome.',
+    cate:'Confounder X affects treatment A and outcome Y. The treatment also affects the outcome.',
+    mediation:'Treatment A affects outcome Y both directly and through mediator M. Baseline confounder X points to A, M and Y.',
     iv:'Instrument Z affects treatment A, which affects outcome Y. Unobserved U affects both A and Y.',
     proximal:'Unobserved U points to proxies Z and W, treatment A and outcome Y. Z points to A, and A points to Y.',
     did_sc:'Treated and control trends before and after treatment. The post-treatment effect is the gap between the treated outcome and its parallel-trend counterfactual.',
@@ -30,18 +30,13 @@
   const axes = (x,y,right,top) => path(`M ${x} ${y} V ${top}`,'axis')+path(`M ${x} ${y} H ${right}`,'axis');
   const diagrams = {
     ate: () => path('M 176 45 L 110 102')+path('M 224 45 L 289 102')+path('M 123 122 H 276','accent')+
-      node(200,30,'X')+text(242,34,'Covariates','label','start')+node(92,122,'A','Treatment')+node(308,122,'Y','Outcome'),
-    cate: () => axes(45,151,305,26)+text(49,16,'E[Y | A, x]','math','start')+text(316,155,'x','math')+
-      path('M 58 108 C 104 102, 131 81, 171 61 S 240 32, 291 35','accent',false)+
-      path('M 58 139 C 102 132, 136 113, 177 108 S 247 103, 291 111','muted',false)+
-      path('M 184 30 V 151','guide',false)+path('M 184 64 V 102','edge',false)+
-      '<path d="M 180 68 L 184 60 L 188 68 M 180 98 L 184 106 L 188 98" class="di-edge"/>'+
-      text(184,172,'x*','math')+path('M 314 55 H 331','accent',false)+text(338,59,'A = 1','label','start')+
-      path('M 314 104 H 331','muted',false)+text(338,108,'A = 0','label','start'),
+      node(200,30,'X')+text(242,34,'Confounder','label','start')+node(92,122,'A','Treatment')+node(308,122,'Y','Outcome'),
+    cate: () => path('M 176 45 L 110 102')+path('M 224 45 L 289 102')+path('M 123 122 H 276','accent')+
+      node(200,30,'X')+text(242,34,'Confounder','label','start')+node(92,122,'A','Treatment')+node(308,122,'Y','Outcome'),
     mediation: () => path('M 174 34 Q 94 42 62 82','guide')+path('M 200 44 V 81','guide')+
       path('M 226 34 Q 305 42 338 82','guide')+path('M 91 101 H 168','accent')+path('M 231 101 H 308','accent')+
       path('M 78 118 C 145 182, 255 182, 322 118','accent')+
-      node(200,26,'X')+text(242,30,'Covariates','label','start')+
+      node(200,26,'X')+text(242,30,'Confounder','label','start')+
       node(60,101,'A','Treatment')+node(200,101,'M','Mediator')+node(340,101,'Y','Outcome')+
       text(129,83,'Indirect','accent-label')+text(200,181,'Direct','accent-label'),
     iv: () => path('M 240 53 L 207 103','guide')+path('M 278 52 L 329 103','guide')+
@@ -116,3 +111,4 @@
   new MutationObserver(render).observe(heading,{childList:true,characterData:true,subtree:true});
   render();
 })();
+

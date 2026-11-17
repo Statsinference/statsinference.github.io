@@ -23,5 +23,7 @@
 .comparison-charts .chart-legend-marker.pfn{background:var(--pfn)}
 .comparison-charts .chart-legend-marker.classical{background:var(--classical);border-radius:0;transform:rotate(45deg)}
 .comparison-charts .chart-empty{display:grid;place-items:center;min-height:275px;color:var(--quiet);font-size:12px;text-align:center}
+.comparison-charts .chart-note{margin:8px 0 0;color:var(--muted);font:11px/1.5 var(--body);text-align:center}
 @media(max-width:1000px){#methodology.comparison-charts{grid-template-columns:1fr}}
 @media(max-width:480px){.comparison-charts .comparison-card{padding:16px 12px 12px}.comparison-charts .comparison-plot{min-height:280px}}
+

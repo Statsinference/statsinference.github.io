@@ -24,6 +24,9 @@ jobs:
         run: |
           node --check assets/test-view.js
           node --check assets/test-references.js
+          node --check assets/comparison-charts.js
+          node --check assets/domain-illustrations.js
+          node tests/verify_log_charts.cjs
           python -c 'import json; d=json.load(open("data/mediation-fivefold.json")); assert len(d["rows"])==2 and len(d["dgp_results"])==26'
       - name: Install browser verification tools
         run: |
@@ -37,3 +40,4 @@ jobs:
           name: test-view-verification
           path: verification/
           retention-days: 3
+

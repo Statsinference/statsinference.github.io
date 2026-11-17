@@ -3,7 +3,7 @@
 const DOMAINS = [
  {id:'ate',name:'Average Treatment Effect',desc:'Point estimates and confidence intervals for average treatment effects.'},
  {id:'cate',name:'Conditional Average Treatment Effect',desc:'Inference for conditional treatment effects at specified covariate queries.'},
- {id:'mediation',name:'Causal Mediation',desc:'Statistical inference for explicitly defined direct, indirect, and mediation targets.'},
+ {id:'mediation',name:'Causal Mediation Analysis',desc:'Statistical inference for explicitly defined direct, indirect, and mediation targets.'},
  {id:'iv',name:'Instrumental Variables',desc:'Inference with instrumental variables under each task’s stated identification assumptions.'},
  {id:'proximal',name:'Proximal Causal Inference',desc:'Causal inference with proxy variables under each task’s stated assumptions.'},
  {id:'did_sc',name:'Difference-in-Differences',desc:'Inference for difference-in-differences targets.'},
@@ -19,16 +19,17 @@ const METRICS=[
  {key:'bias',label:'Bias',hint:'Closer to zero',detail:'Signed estimation error. Sorting uses absolute bias.'},
  {key:'variance',label:'Variance',hint:'',detail:'Source-reported variance; not standard error.'},
  {key:'rmse',label:'RMSE',hint:'Lower is better',detail:'Root mean squared error, for this target and evaluation only.'},
- {key:'length',label:'Length',hint:'Read with coverage',detail:'Mean confidence interval length; smaller alone does not imply better inference.'},
+ {key:'length',label:'Mean interval length',hint:'Read with coverage',detail:'Mean confidence interval length; smaller alone does not imply better inference.'},
  {key:'coverage',label:'Coverage',hint:'',detail:'Empirical coverage; higher is not automatically better. Sorting uses distance from the nominal level.'},
  {key:'time_s',label:'Inference time',hint:'Seconds per table',detail:'Reported point-plus-interval time. Hardware and timing protocols may differ.'}
 ];
 const metricKeys=METRICS.map(m=>m.key);
-let task='mediation',family='all',query='',testSuites=[],loadError='',loaded=false;
+let task='ate',family='all',query='',testSuites=[],loadError='',loaded=false;
 let rankMetric='rmse',sortDirection=1;
+const expandedMethods=new Set();
 const domainSuites=()=>testSuites.filter(s=>s.domain===task);
 const current=()=>domainSuites()[0]||null;
-const visibleRows=()=> (current()?.rows||[]).filter(r=>(family==='all'||r.family===family)&&(!query||(r.method+' '+r.configuration+' '+r.source_method).toLowerCase().includes(query)));
+const visibleRows=()=> (current()?.rows||[]).filter(r=>(family==='all'||r.family===family)&&(!query||((r.family==='classical'?'Baseline ':'RFN ')+r.method+' '+r.configuration+' '+r.source_method).toLowerCase().includes(query)));
 
 // All pooling is explicit and approximate because its inputs are rounded report summaries.
 // Mean metrics use counts. RMSE pools squared errors. Error variance includes between-group means.
@@ -107,20 +108,56 @@ function formatMetric(r,k){
  const value=a!==0&&(a>=10000||a<.0001)?a.toExponential(2):a.toFixed(digits);
  return approx+(v<0?'−':k==='bias'&&v>0?'+':'')+value;
 }
-function primaryRef(row){return ArenaMethodReferences.primary(ArenaMethodReferences.lookup(task,row));}
-// Display metadata only: keep the full configurations in source data and CSV.
-// Fold labels are explicitly scoped to the evaluated release, not guessed from a model name.
-const FIVE_FOLD_RELEASES=Object.freeze({
- 'mediation-fivefold-2026-11-16':'MediPFN',
- 'did-test-2026-11-16':'PFN-DiD',
- 'proximal-unified-2026-11-16-normalized':'ProximalFM',
- 'iv-v03-test':'IV-PFN'
-});
-function methodCell(r){
- if(r.family==='classical')return '<span class="mname">RF + bootstrap</span>';
- const ref=primaryRef(r),name=ref?`<a class="method-ref-name" href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">${esc(r.method)}</a>`:esc(r.method);
- const folds=FIVE_FOLD_RELEASES[current()?.id]===r.method?'5-fold':'';
- return `<span class="mname">${name}</span>${folds?`<span class="method-config">${folds}</span>`:''}${ref?`<a class="method-ref-label" href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">${ref.label} ↗</a>`:''}`;
+// These details describe the evaluated release, not a model's defaults. Where
+// the submitted evaluation omits a parameter, explicitly say it is unreported.
+function methodFacts(r,s){
+ const baseline=r.family==='classical';
+ const facts=[['Method',baseline?'Random forest':r.method]];
+ if(['ate-fixed-collection-report','cate-fixed-collection-report'].includes(s.id)){
+  if(baseline){
+   facts.push(['Estimator',s.domain==='ate'?'AIPW with treatment-stratified cross-fitting':'T-learner ensemble']);
+   facts.push(['Folds','5'],['Forest','200 trees; minimum leaf size 5'],['Bootstrap','50 full row-bootstrap refits; percentile intervals']);
+   if(s.domain==='ate')facts.push(['Propensity clipping','0.01 to 0.99']);
+  }else{
+   facts.push(['Model','CausalPFN 0.1.5; official causalpfn_v0.pt weights'],['Evaluation','Native point and interval workflow; no additional five-fold wrapper'],['Uncertainty','10,000 predictive draws; calibrate=False']);
+  }
+ }else if(s.id==='mediation-fivefold-2026-11-16'){
+  facts.push(['Evaluation folds','5 treatment-stratified folds']);
+  if(baseline)facts.push(['Forest','200 trees; minimum leaf size 5'],['Bootstrap','50 full row-bootstrap refits; percentile intervals']);
+  else facts.push(['Checkpoint','Trained with two folds; evaluated with five folds without recalibration']);
+ }else if(s.id==='iv-v03-test'){
+  facts.push(['Folds','5 (as stated in the supplied results)']);
+  if(baseline)facts.push(['Source configuration','Trimmed random forest + bootstrap'],['Bootstrap replicates','Not reported']);
+  else facts.push(['Version','IV-PFN v0.3']);
+ }else if(s.id==='did-test-2026-11-16'){
+  facts.push(['Estimator','Normalized DR-DiD score'],['Folds','5']);
+  if(baseline)facts.push(['Forest','200 trees; minimum leaf size 5'],['Bootstrap','50 full row-bootstrap refits'],['Interval','95% normal interval using bootstrap standard errors']);
+  else facts.push(['Backbone','Frozen TabPFN-3.5 with residual adapters'],['Interval','95% normal interval using influence-function standard errors']);
+ }else if(s.id==='proximal-unified-2026-11-16-normalized'){
+  if(baseline)facts.push(['Estimator','Proximal series-IV / sieve-GMM'],['Folds','5-fold out-of-fold nuisance predictions'],['Forest','200 trees; minimum leaf size 5'],['Bootstrap','50 full-pipeline row-bootstrap refits; percentile interval']);
+  else facts.push(['Evaluation','Five-context distribution mixture; not nuisance cross-fitting'],['Interval','Quantiles of the five-context mixture distribution']);
+ }else if(r.configuration)facts.push(['Configuration',r.configuration]);
+ else facts.push(['Configuration','Not reported']);
+ return facts;
+}
+function methodKey(r){return [current()?.id,r.family,r.source_method||r.method,r.configuration||''].join('::');}
+function methodCell(r,index){
+ const name=r.family==='classical'?'Baseline':r.method;
+ const open=expandedMethods.has(methodKey(r));
+ return `<button type="button" class="method-toggle" data-toggle-method="${index}" aria-expanded="${open}" aria-controls="method-details-${index}"><span class="mname">${esc(name)}</span><span class="method-chevron" aria-hidden="true">${open?'⌃':'⌄'}</span></button>`;
+}
+function methodDetails(r,index){
+ const s=current(),ref=ArenaMethodReferences.lookup(task,r),facts=methodFacts(r,s);
+ const links=[];
+ for(const [kind,label] of [['paper','Paper'],['huggingface','Hugging Face']]){
+  const item=ref?.[kind],url=ArenaMethodReferences.safeURL(item?.url,kind);
+  if(url){
+   const title=item.title||label;
+   links.push(`<div><a class="method-reference-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}: ${esc(title)} ↗</a>${item.citation?`<p>${esc(item.citation)}</p>`:''}</div>`);
+  }
+ }
+ const references=r.family==='classical'?'':links.length?`<div class="method-reference-links"><strong>Method references</strong> ${links.join(' ')}</div>`:'<div class="method-reference-links"><strong>Method references</strong> Not provided for this evaluated version.</div>';
+ return `<tr class="method-details-row" id="method-details-${index}"><td colspan="8"><div class="method-details"><div class="method-detail-grid">${facts.map(([label,value])=>`<div><strong>${esc(label)}</strong><p>${esc(value)}</p></div>`).join('')}</div>${references}</div></td></tr>`;
 }
 // Rank within the current domain only. Missing results always sort last.
 function metricScore(row,key){
@@ -154,14 +191,14 @@ function setRanking(key,toggle=false){
 }
 function renderMetrics(){
  const s=current(),rs=sortedRows(),ranks=rankMap();
- const empty=loadError?'Results unavailable':loaded?'Results not yet published':'Loading results…';
+ const empty=loadError?'Results unavailable':loaded?'Coming soon':'Loading results…';
  const headers=METRICS.map(m=>{
   const active=m.key===rankMetric;
   const order=!active?'none':['bias','coverage'].includes(m.key)?'other':sortDirection===1?'ascending':'descending';
   const label=m.key==='time_s'?'Time (s)':m.label;
   return `<th scope="col" data-metric="${m.key}" class="r${active?' ranked-column':''}" aria-sort="${order}"><button type="button" data-sort="${m.key}" title="${esc(m.detail)}">${esc(label)} <span class="sort-arrow" aria-hidden="true">${active?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`;
  }).join('');
- const body=rs.length?rs.map(r=>`<tr data-method="${esc(r.source_method||r.method)}"><td class="rank-cell num">${ranks.get(r)}</td><th scope="row" class="method-cell">${methodCell(r)}</th>${METRICS.map(m=>`<td data-metric="${m.key}" class="r num${m.key===rankMetric?' ranked-column':''}" title="${esc(r.status==='not_reported'?'Not reported':r.approximate_metrics?.includes(m.key)?'Approximate value':'Reported value')}">${formatMetric(r,m.key)}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="8" class="empty-cell">${s&&!loadError?'No methods match the filters.':empty}</td></tr>`;
+ const body=rs.length?rs.map((r,index)=>`<tr data-method="${esc(r.source_method||r.method)}"><td class="rank-cell num">${ranks.get(r)}</td><th scope="row" class="method-cell">${methodCell(r,index)}</th>${METRICS.map(m=>`<td data-metric="${m.key}" class="r num${m.key===rankMetric?' ranked-column':''}" title="${esc(r.status==='not_reported'?'Not reported':r.approximate_metrics?.includes(m.key)?'Approximate value':'Reported value')}">${formatMetric(r,m.key)}</td>`).join('')}</tr>${expandedMethods.has(methodKey(r))?methodDetails(r,index):''}`).join(''):`<tr><td colspan="8" class="empty-cell">${s&&!loadError?'No methods match the filters.':empty}</td></tr>`;
  $('#leaderboard-wrap').innerHTML=`<table id="leaderboard"><caption class="sr-only">${esc(DOMAINS.find(d=>d.id===task).name)} — Test results</caption><thead><tr><th scope="col" class="rank-cell">Rank</th><th scope="col" class="method-cell">Method</th>${headers}</tr></thead><tbody>${body}</tbody></table>`;
  $('#rank-metric').value=rankMetric;
  $('#rank-metric').title=METRICS.find(m=>m.key===rankMetric).detail;
@@ -170,21 +207,52 @@ function renderMetrics(){
  if(rs.some(r=>r.approximate_metrics?.length))notes.push('≈ Approximate value.');
  if(rs.some(r=>metricKeys.some(k=>!finite(r[k]))))notes.push('— Not reported.');
  $('#table-note').textContent=notes.join(' ');$('#table-note').hidden=!notes.length;
- renderReferences();
 }
-function renderReferences(){
- const entries=new Map();for(const r of visibleRows().filter(r=>r.family==='pfn')){const source=ArenaMethodReferences.lookup(task,r);entries.set(source?.id||r.method,{r,source});}
- $('#method-references').hidden=!entries.size;
- $('#reference-list').innerHTML=[...entries.values()].map(({r,source})=>{
-  const ref=ArenaMethodReferences.primary(source),hf=ArenaMethodReferences.safeURL(source?.huggingface?.url,'huggingface');
-  return `<div class="reference-entry"><strong>${esc(r.method)}</strong>${ref?`<a class="reference-title" href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">${esc(ref.title)} ↗</a><p>${esc(ref.citation||'Hugging Face model card')}</p>${hf&&ref.label==='Paper'?`<a class="reference-secondary" href="${esc(hf)}" target="_blank" rel="noopener noreferrer">Model on Hugging Face ↗</a>`:''}`:'<p>Method-specific paper or Hugging Face link not yet provided.</p>'}</div>`;
- }).join('')+'<p class="reference-note">Method references identify the model, not the source of these benchmark scores.</p>';
+// These are the targets of the current releases, not definitions of every
+// estimand that may be studied in a domain. MathML avoids a network dependency.
+const potentialOutcome=(a)=>`<msup><mi>Y</mi><mrow><mo>(</mo><mn>${a}</mn><mo>)</mo></mrow></msup>`;
+const meanContrast=potentialOutcome(1)+'<mo>−</mo>'+potentialOutcome(0);
+const mml=(body,label)=>`<math xmlns="http://www.w3.org/1998/Math/MathML" aria-label="${esc(label)}">${body}</math>`;
+const expectation=(inside)=>`<mi mathvariant="double-struck">E</mi><mo>[</mo>${inside}<mo>]</mo>`;
+const targetDefinitions={
+ ate:mml('<mi>ATE</mi><mo>=</mo>'+expectation(meanContrast),'ATE equals the expected difference between potential outcomes under treatment and control'),
+ cate:mml('<mi>CATE</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo>'+expectation(meanContrast+'<mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi>'),'CATE at x equals the expected treatment effect conditional on X equals x'),
+ mediation:mml('<msub><mi>NIE</mi><mn>1</mn></msub><mo>=</mo>'+expectation('<mi>Y</mi><mo>(</mo><mn>1</mn><mo>,</mo><mi>M</mi><mo>(</mo><mn>1</mn><mo>)</mo><mo>)</mo><mo>−</mo><mi>Y</mi><mo>(</mo><mn>1</mn><mo>,</mo><mi>M</mi><mo>(</mo><mn>0</mn><mo>)</mo><mo>)</mo>'),'Natural indirect effect at treatment level one'),
+ proximal:mml('<mi>CATE</mi><mo>(</mo><msup><mi>x</mi><mo>∗</mo></msup><mo>)</mo><mo>=</mo>'+expectation(meanContrast+'<mo>∣</mo><mi>X</mi><mo>=</mo><msup><mi>x</mi><mo>∗</mo></msup>'),'CATE at the query point x star'),
+ did_sc:mml('<mi>ATT</mi><mo>=</mo>'+expectation('<msub><mi>Y</mi><mtext>post</mtext></msub><mo>(</mo><mn>1</mn><mo>)</mo><mo>−</mo><msub><mi>Y</mi><mtext>post</mtext></msub><mo>(</mo><mn>0</mn><mo>)</mo><mo>∣</mo><mi>A</mi><mo>=</mo><mn>1</mn>'),'Average treatment effect on the treated in the post period')
+};
+// The four future areas and IV encompass many targets. These are illustrative
+// examples only; they are not assertions about the unpublished / unspecified
+// evaluation targets.
+const outcomeSymbol=(v,a)=>`<msup><mi>${v}</mi><mrow><mo>(</mo><mn>${a}</mn><mo>)</mo></mrow></msup>`;
+const exampleTargets={
+ iv:mml('<mi>LATE</mi><mo>=</mo>'+expectation(meanContrast+'<mo>∣</mo>'+outcomeSymbol('D',1)+'<mo>&gt;</mo>'+outcomeSymbol('D',0)),'Example local average treatment effect among compliers'),
+ nonparametric_regression:mml('<mi>m</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo>'+expectation('<mi>Y</mi><mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi>'),'Example conditional mean regression function'),
+ quantile:mml('<msub><mi>Q</mi><mi>τ</mi></msub><mo>(</mo><mi>Y</mi><mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi><mo>)</mo><mo>=</mo><mi>inf</mi><mo>{</mo><mi>y</mi><mo>:</mo><mi>P</mi><mo>(</mo><mi>Y</mi><mo>≤</mo><mi>y</mi><mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi><mo>)</mo><mo>≥</mo><mi>τ</mi><mo>}</mo>','Example conditional quantile at level tau'),
+ semi_supervised:mml('<mi>μ</mi><mo>=</mo>'+expectation('<mi>Y</mi>'),'Example population outcome mean in semi-supervised inference'),
+ missing_data:mml('<mi>μ</mi><mo>=</mo>'+expectation('<mi>Y</mi>'),'Example full-data population outcome mean with missing outcomes')
+};
+function renderDefinition(){
+ const host=$('#domain-definition');if(!host)return;
+ if(task==='iv')host.innerHTML='<span>Current estimand: not specified in the submitted IV results.</span><br><span>Example estimand (not the reported target)</span> '+exampleTargets.iv;
+ else if(targetDefinitions[task])host.innerHTML='<span>Current estimand</span> '+targetDefinitions[task];
+ else if(exampleTargets[task]){
+  const explanation=task==='semi_supervised'?' Uses labeled (X, Y) and unlabeled X data.':task==='missing_data'?' Full-data mean when some outcomes are unobserved.':'';
+  host.innerHTML='<span>Example estimand (results coming soon)</span> '+exampleTargets[task]+esc(explanation);
+ }
+ else host.textContent='';
+ host.hidden=!host.textContent.trim();
 }
 function render(){
  const d=DOMAINS.find(d=>d.id===task);
  for(const b of document.querySelectorAll('[data-t]')){const on=b.dataset.t===task;b.classList.toggle('on',on);b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;}
  for(const b of document.querySelectorAll('[data-fam]')){const on=b.dataset.fam===family;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}
- $('#main-panel').setAttribute('aria-labelledby','tab-'+task);$('#hero-title').textContent=d.name;$('#hero-sub').textContent=d.desc;
+ $('#main-panel').setAttribute('aria-labelledby','tab-'+task);$('#hero-title').textContent=d.name;$('#hero-sub').textContent=d.desc;renderDefinition();
+ const comingSoon=loaded&&!loadError&&!current()&&['nonparametric_regression','quantile','semi_supervised','missing_data'].includes(task);
+ $('#coming-soon').hidden=!comingSoon;
+ document.querySelector('.test-controls').hidden=comingSoon;
+ $('#table').hidden=comingSoon;
+ $('#methodology').hidden=comingSoon;
  $('#release-status').textContent=loadError?'RESULTS UNAVAILABLE':loaded?'TEST RESULTS':'LOADING RESULTS';
  $('#release-description').textContent=loadError;$('#release-description').hidden=!loadError;
  $('#registry-link').href='https://github.com/Statsinference/stats-inference-arena/blob/main/dgp-submissions/registry/by-domain/'+task+'.md';
@@ -198,12 +266,21 @@ $('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(
 $('#fam-chips').addEventListener('click',e=>{const b=e.target.closest('[data-fam]');if(b){family=b.dataset.fam;render();}});
 $('#q').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();renderMetrics();});
 $('#rank-metric').addEventListener('change',e=>setRanking(e.target.value));
-$('#leaderboard-wrap').addEventListener('click',e=>{const b=e.target.closest('[data-sort]');if(b)setRanking(b.dataset.sort,true);});
+$('#leaderboard-wrap').addEventListener('click',e=>{
+ const toggle=e.target.closest('[data-toggle-method]');
+ if(toggle){
+  const index=Number(toggle.dataset.toggleMethod),row=sortedRows()[index];
+  if(!row)return;
+  const key=methodKey(row);expandedMethods.has(key)?expandedMethods.delete(key):expandedMethods.add(key);
+  renderMetrics();$('#leaderboard-wrap').querySelector(`[data-toggle-method="${index}"]`)?.focus();return;
+ }
+ const b=e.target.closest('[data-sort]');if(b)setRanking(b.dataset.sort,true);
+});
 function csvCell(v){let s=String(v??'');if(typeof v==='string'&&/^[=+@\t\r-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
 $('#export-btn').addEventListener('click',()=>{
  const s=current();if(!s)return;const keys=['rank','domain','evaluation','method','configuration','source_method',...metricKeys,'approximate_metrics','tables','source_file','aggregation','variance_definition','timing'];
  const ranks=rankMap();
- const rr=sortedRows().map(r=>({...r,rank:ranks.get(r),domain:task,evaluation:'Test',approximate_metrics:r.approximate_metrics.join(';'),source_file:s.source.file,aggregation:s.aggregation,variance_definition:s.variance_definition,timing:s.timing}));
+ const rr=sortedRows().map(r=>({...r,method:r.family==='classical'?'Baseline':r.method,rank:ranks.get(r),domain:task,evaluation:'Test',approximate_metrics:r.approximate_metrics.join(';'),source_file:s.source.file,aggregation:s.aggregation,variance_definition:s.variance_definition,timing:s.timing}));
  const text=[keys.join(','),...rr.map(r=>keys.map(k=>csvCell(r[k])).join(','))].join('\r\n');
  const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='statistical-inference-arena-'+task+'-test.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
