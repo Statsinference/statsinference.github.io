@@ -16,13 +16,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;450;500;550;600;650&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/site.css?v=arena-2">
-<link rel="stylesheet" href="assets/release.css?v=multidomain-2">
-<link rel="stylesheet" href="assets/references.css?v=1">
-<link rel="stylesheet" href="assets/test-view.css?v=aligned-tooltip-20261117">
-<link rel="stylesheet" href="assets/submit-method.css?v=black-submit-1">
-<link rel="stylesheet" href="assets/comparison-charts.css?v=aligned-tooltip-20261117">
-<link rel="stylesheet" href="assets/domain-illustrations.css?v=aligned-tooltip-20261117">
+<link rel="stylesheet" href="assets/site.css?v=overview-20261117">
+<link rel="stylesheet" href="assets/release.css?v=overview-20261117">
+<link rel="stylesheet" href="assets/references.css?v=overview-20261117">
+<link rel="stylesheet" href="assets/test-view.css?v=overview-20261117">
+<link rel="stylesheet" href="assets/submit-method.css?v=overview-20261117">
+<link rel="stylesheet" href="assets/comparison-charts.css?v=overview-20261117">
+<link rel="stylesheet" href="assets/domain-illustrations.css?v=overview-20261117">
+<link rel="stylesheet" href="assets/arena-overview.css?v=overview-20261117">
 </head>
 <body>
 <a class="skip" href="#main-panel">Skip to leaderboard</a>
@@ -40,7 +41,16 @@
 <div class="page">
 <header class="topbar"><div class="topbar-left"><button class="menu-button" id="menu-btn" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">☰</button><span>Leaderboards</span><span class="breadcrumb-sep">/</span><span class="muted">Statistical inference</span></div><div class="topbar-actions"><button class="theme-toggle" id="theme-btn" aria-label="Switch to dark theme" title="Switch color theme">◐</button><button type="button" class="method-submit-button" id="submit-method-btn" aria-haspopup="dialog" aria-controls="method-submit-dialog" aria-expanded="false">Submit your method</button></div></header>
 <div class="content">
-<section class="page-heading with-domain-illustration" aria-label="About Statistical Inference Arena"><div><h1>Statistical<br><em>Inference Arena.</em></h1></div><figure id="domain-illustration" class="domain-figure" aria-labelledby="domain-figure-title" hidden></figure></section>
+<section class="page-heading with-domain-illustration" aria-label="About Statistical Inference Arena"><div><h1>Statistical<br><em>Inference Arena.</em></h1><p class="arena-introduction">A benchmark for statistical inference. Explore how methods compare in accuracy, uncertainty, and computational efficiency across research areas.</p></div><figure id="domain-illustration" class="domain-figure" aria-labelledby="domain-figure-title" hidden></figure></section>
+<section class="arena-overview" aria-label="Current leaderboard overview">
+<div id="arena-overview-stats" class="arena-stat-grid" aria-live="polite">
+<article class="arena-stat"><strong data-overview-stat="domains">—</strong><span>Research areas</span><small>Including areas in development</small></article>
+<article class="arena-stat"><strong data-overview-stat="active-domains">—</strong><span>Areas with results</span><small>Current leaderboards</small></article>
+<article class="arena-stat"><strong data-overview-stat="method-entries">—</strong><span>Method entries</span><small>Counted within each area</small></article>
+<article class="arena-stat"><strong data-overview-stat="metrics">—</strong><span>Inference metrics</span><small>Accuracy, uncertainty and time</small></article>
+</div>
+<p class="arena-overview-note">Counts describe the currently displayed leaderboards; method entries are counted separately in each research area.</p>
+</section>
 <span id="release-status" hidden></span>
 <p id="release-description" role="status" hidden></p>
 <main id="main-panel" role="tabpanel" aria-labelledby="tab-ate" tabindex="-1">
@@ -63,12 +73,13 @@
 </div></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <noscript><p class="noscript">Enable JavaScript to view the domain leaderboards. Source-reported results are available for Average Treatment Effect, Conditional Average Treatment Effect, Causal Mediation Analysis, Instrumental Variables, Proximal Causal Inference and Difference-in-Differences. <a href="data/results.json">Read the results data</a>.</p></noscript>
-<script src="assets/test-references.js?v=aligned-tooltip-20261117"></script>
-<script src="assets/test-view.js?v=aligned-tooltip-20261117"></script>
-<script src="assets/layout.js?v=arena-2"></script>
-<script src="assets/submit-method.js?v=github-intake-1"></script>
-<script src="assets/comparison-charts.js?v=aligned-tooltip-20261117"></script>
-<script src="assets/domain-illustrations.js?v=aligned-tooltip-20261117"></script>
+<script src="assets/test-references.js?v=overview-20261117"></script>
+<script src="assets/test-view.js?v=overview-20261117"></script>
+<script src="assets/arena-overview.js?v=overview-20261117"></script>
+<script src="assets/layout.js?v=overview-20261117"></script>
+<script src="assets/submit-method.js?v=overview-20261117"></script>
+<script src="assets/comparison-charts.js?v=overview-20261117"></script>
+<script src="assets/domain-illustrations.js?v=overview-20261117"></script>
 </body></html>
 
 
