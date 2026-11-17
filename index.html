@@ -37,8 +37,8 @@
 <div class="page">
 <header class="topbar"><div class="topbar-left"><button class="menu-button" id="menu-btn" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">☰</button><span>Leaderboards</span><span class="breadcrumb-sep">/</span><span class="muted">Statistical inference</span></div><div class="topbar-actions"><button class="theme-toggle" id="theme-btn" aria-label="Switch to dark theme" title="Switch color theme">◐</button><button class="share-button" id="share-btn">Share <span>↗</span></button></div></header>
 <div class="content">
-<section class="page-heading" aria-label="About Statistical Inference Arena"><div><div class="eyebrow">STATISTICAL INFERENCE ARENA</div><h1>Statistical<br><em>Inference Arena.</em></h1><p>Compare estimation accuracy, uncertainty, and efficiency.<br class="desktop-break"> Ten research domains. Six metrics. One Test view.</p></div><div class="scope-stat"><strong>10</strong><span>RESEARCH DOMAINS</span><div class="stat-divider"></div><span>BIAS · VARIANCE · RMSE<br>LENGTH · COVERAGE · TIME</span></div></section>
-<div class="release-bar" role="status"><span class="release-square" aria-hidden="true"></span><strong id="release-status">EVALUATION RESULTS</strong><span id="release-description">Six metrics, presented as tables. Methods retain their own names and references.</span></div>
+<section class="page-heading" aria-label="About Statistical Inference Arena"><div><div class="eyebrow">STATISTICAL INFERENCE ARENA</div><h1>Statistical<br><em>Inference Arena.</em></h1></div><div class="scope-stat"><strong>10</strong><span>RESEARCH DOMAINS</span><div class="stat-divider"></div><span>BIAS · VARIANCE · RMSE<br>LENGTH · COVERAGE · TIME</span></div></section>
+<div class="release-bar" role="status"><span class="release-square" aria-hidden="true"></span><strong id="release-status">EVALUATION RESULTS</strong><span id="release-description" hidden></span></div>
 <main id="main-panel" role="tabpanel" aria-labelledby="tab-mediation" tabindex="-1">
 <section class="domain-heading"><div><div class="section-label">DOMAIN LEADERBOARD</div><h2 id="hero-title">Mediation</h2><p id="hero-sub">Statistical inference for explicitly defined direct, indirect, and mediation targets.</p></div><a href="#table" class="text-link">Full leaderboard <span>↘</span></a></section>
 <div class="suite-info" id="suite-info"></div>
@@ -57,8 +57,9 @@
 <footer><a class="footer-brand" href="#domain=mediation"><img src="assets/statsarena-logo.webp" alt="" width="24" height="24">Statistical Inference Arena</a><span>Statistical Inference Arena</span><a href="https://github.com/Statsinference/statsinference.github.io" target="_blank" rel="noopener noreferrer">Website source ↗</a></footer>
 </div></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-<noscript><p class="noscript">Enable JavaScript to view the domain leaderboards. Source-reported results are available for ATE, CATE, Mediation, IV, Proximal and DiD. <a href="data/results.json">Read the results data</a>.</p></noscript>
+<noscript><p class="noscript">Enable JavaScript to view the domain leaderboards. Source-reported results are available for Average Treatment Effect, Conditional Average Treatment Effect, Mediation, Instrumental Variables, Proximal Causal Inference and Difference-in-Differences. <a href="data/results.json">Read the results data</a>.</p></noscript>
 <script src="assets/test-references.js?v=ate-cate-1"></script>
-<script src="assets/test-view.js?v=compact-1"></script>
+<script src="assets/test-view.js?v=full-domain-names-1"></script>
 <script src="assets/layout.js?v=arena-2"></script>
 </body></html>
+
