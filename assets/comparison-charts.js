@@ -16,6 +16,7 @@
   function closeTip() {
     if (!activeTip) return;
     activeTip.tooltip.hidden = true;
+    activeTip.host.style.minHeight = '';
     activeTip.point.setAttribute('aria-expanded', 'false');
     activeTip = null;
   }
@@ -31,7 +32,7 @@
     const display = formatNumber(value);
     const wasRounded = Math.abs(Number(display) - value) > Math.max(1e-12, Math.abs(value) * 1e-12);
     const approximate = row.approximate_metrics?.includes(key) || wasRounded ? '≈' : '';
-    const unit = key === 'coverage' ? '%' : key === 'time_s' ? ' s' : suite.metric_scale === 'normalized' ? ' (normalized by outcome SD)' : suite.metric_scale === 'original' ? ' (original units)' : '';
+    const unit = key === 'coverage' ? '%' : key === 'time_s' ? ' s' : suite.metric_scale === 'normalized' ? ' (normalized by outcome SD)' : '';
     return approximate + display + unit;
   }
   function showTip(host, tooltip, point, cx, cy, pinned = false) {
@@ -48,57 +49,67 @@
     const maxTop = Math.max(4, (host.clientHeight || 310) - tooltip.offsetHeight - 4);
     const clampY = v => Math.max(4, Math.min(v, maxTop));
     const positions = [idealLeft, 4, maxLeft].flatMap(left => [above, below, 4, maxTop].map(top => ({left, top:clampY(top)})));
-    const bounds = host._guidanceBounds;
-    const intersects = p => bounds && p.left < bounds.right + 4 && p.left + tooltip.offsetWidth > bounds.left - 4 && p.top < bounds.bottom + 4 && p.top + tooltip.offsetHeight > bounds.top - 4;
-    const chosen = positions.find(p => !intersects(p)) || positions[0];
+    const bounds = host._guidanceBounds || [];
+    const intersects = p => bounds.some(rect => p.left < rect.right + 4 && p.left + tooltip.offsetWidth > rect.left - 4 && p.top < rect.bottom + 4 && p.top + tooltip.offsetHeight > rect.top - 4);
+    let chosen = positions.find(p => !intersects(p));
+    if (!chosen) {
+      // Narrow charts may have no in-plot space beside both guides. Place the
+      // active detail below the SVG and expand the host instead of covering them.
+      chosen = {left:idealLeft, top:(host._plotHeight || 270) + 12};
+      host.style.minHeight = `${chosen.top + tooltip.offsetHeight + 6}px`;
+    }
     const {left, top} = chosen;
     tooltip.style.left = `${left}px`;
     tooltip.style.top = `${top}px`;
   }
-  // Pick an in-plot area away from every marker and the nominal-coverage line.
+  // Place separate directional indicators beside their respective axes.
+  // Search jointly so neither indicator obscures points, the target line or
+  // the other indicator. Narrow viewports use the same SVG coordinates.
   function drawGuidance(svg, host, box, plotW, plotH, positions, nominalY, nominal, width) {
-    let w = Math.min(148, Math.max(96, plotW - 12));
-    let h = 42;
-    const candidatesFor = (w, h) => {
-      const candidates = [];
-      for (let iy = 0; iy <= 10; iy++) {
-        for (let ix = 10; ix >= 0; ix--) {
-          const x = box.left + 4 + Math.max(0, plotW - w - 8) * ix / 10;
-          const y = box.top + 4 + Math.max(0, plotH - h - 8) * iy / 10;
-          const collidesPoint = positions.some(p => p.x >= x - 10 && p.x <= x + w + 10 && p.y >= y - 10 && p.y <= y + h + 10);
-          const collidesTarget = nominalY != null && nominalY >= y - 4 && nominalY <= y + h + 4;
-          const distance = Math.min(...positions.map(p => Math.hypot(p.x - (x + w/2), p.y - (y + h/2))));
-          candidates.push({x,y,collidesPoint,collidesTarget,distance});
-        }
-      }
-      return candidates;
-    };
-    let candidates = candidatesFor(w, h);
-    let valid = candidates.filter(p => !p.collidesPoint && !p.collidesTarget);
-    let compact = false;
-    if (!valid.length && w > 96) {
-      w = 96; h = 38; compact = true;
-      candidates = candidatesFor(w, h);
-      valid = candidates.filter(p => !p.collidesPoint && !p.collidesTarget);
+    const xW = Math.min(96, Math.max(84, plotW - 12)), xH = 20;
+    const yW = 22, yH = 70;
+    function collidesPoint(r) {
+      return positions.some(p => p.x >= r.x - 9 && p.x <= r.x + r.w + 9 && p.y >= r.y - 9 && p.y <= r.y + r.h + 9);
     }
-    // On unusually dense plots retain the reference line and minimize marker
-    // overlap; data markers are rendered after this soft background.
-    const pool = valid.length ? valid : candidates.filter(p => !p.collidesTarget);
-    const place = (pool.length ? pool : candidates).sort((a,b) => Number(a.collidesPoint)-Number(b.collidesPoint) || b.distance-a.distance)[0];
-    const group = svgElement('g', {class:'chart-guidance' + (compact ? ' compact' : ''), 'data-x':place.x, 'data-y':place.y, 'data-width':w, 'data-height':h, 'aria-hidden':'true'});
-    group.append(svgElement('rect', {x:place.x,y:place.y,width:w,height:h,rx:6,class:'chart-guidance-background'}));
-    // One horizontal and one vertical arrow make the two directions explicit.
-    const ax = place.x + 8, ay = place.y + 12;
-    group.append(svgElement('path', {d:`M ${ax+12} ${ay} H ${ax} M ${ax+4} ${ay-4} L ${ax} ${ay} L ${ax+4} ${ay+4}`,class:'chart-guidance-arrow'}));
-    group.append(svgElement('text', {x:place.x+25,y:place.y+15,class:'chart-guidance-text'}, nominalY == null ? 'Shorter time' : 'Shorter interval'));
-    const bx = place.x + 14, by = place.y + 30;
-    const up = nominalY != null && place.y > nominalY;
-    const dy = up ? -1 : 1;
-    group.append(svgElement('path', {d:`M ${bx} ${by-5*dy} V ${by+5*dy} M ${bx-4} ${by+1*dy} L ${bx} ${by+5*dy} L ${bx+4} ${by+1*dy}`,class:'chart-guidance-arrow'}));
-    group.append(svgElement('text', {x:place.x+25,y:place.y+34,class:'chart-guidance-text'}, nominalY == null ? 'Lower RMSE' : `Toward ${formatNumber(nominal)}%`));
-    svg.append(group);
-    const scale = host.clientWidth / width;
-    host._guidanceBounds = {left:place.x*scale,top:place.y*scale,right:(place.x+w)*scale,bottom:(place.y+h)*scale};
+    function collidesTarget(r) {
+      return nominalY != null && nominalY >= r.y - 4 && nominalY <= r.y + r.h + 4;
+    }
+    function overlap(a,b) {
+      return a.x < b.x + b.w + 4 && a.x + a.w + 4 > b.x && a.y < b.y + b.h + 4 && a.y + a.h + 4 > b.y;
+    }
+    const xs = [], ys = [];
+    for (let k=0; k<=10; k++) for (let j=0; j<=10; j++) {
+      // Start at the x axis / y axis respectively and move inward only as
+      // needed to preserve the data and reference-line whitespace.
+      const xr = {x:box.left+4+Math.max(0,plotW-xW-8)*j/10,
+                  y:box.top+plotH-xH-4-Math.min(76,plotH-xH-8)*k/10,w:xW,h:xH};
+      const yr = {x:box.left+4+Math.min(48,Math.max(0,plotW-yW-8))*k/10,
+                  y:box.top+4+Math.max(0,plotH-yH-8)*j/10,w:yW,h:yH};
+      if (!collidesTarget(xr)) xs.push({...xr, bad:collidesPoint(xr), distance:k});
+      if (!collidesTarget(yr)) ys.push({...yr, bad:collidesPoint(yr), distance:k});
+    }
+    let best = null;
+    for (const xr of xs) for (const yr of ys) {
+      const score = (Number(xr.bad)+Number(yr.bad))*10000 +
+                    Number(overlap(xr,yr))*10000 + xr.distance + yr.distance;
+      if (!best || score < best.score) best = {xr,yr,score};
+    }
+    if (!best) return; // impossible geometry must not obscure reference data
+    const {xr,yr} = best;
+    const xGroup = svgElement('g',{class:'chart-guidance chart-guidance-x','data-axis':'x','data-direction':'left','data-x':xr.x,'data-y':xr.y,'data-width':xr.w,'data-height':xr.h,'aria-hidden':'true'});
+    xGroup.append(svgElement('rect',{x:xr.x,y:xr.y,width:xr.w,height:xr.h,rx:5,class:'chart-guidance-background'}));
+    const xa=xr.x+6, xy=xr.y+10;
+    xGroup.append(svgElement('path',{d:`M ${xa+12} ${xy} H ${xa} M ${xa+4} ${xy-4} L ${xa} ${xy} L ${xa+4} ${xy+4}`,class:'chart-guidance-arrow'}));
+    xGroup.append(svgElement('text',{x:xr.x+23,y:xr.y+13.5,class:'chart-guidance-text'},nominalY==null?'Shorter time':'Shorter CI'));
+    const up=nominalY!=null && yr.y>nominalY;
+    const yGroup = svgElement('g',{class:'chart-guidance chart-guidance-y','data-axis':'y','data-direction':up?'up':'down','data-x':yr.x,'data-y':yr.y,'data-width':yr.w,'data-height':yr.h,'aria-hidden':'true'});
+    yGroup.append(svgElement('rect',{x:yr.x,y:yr.y,width:yr.w,height:yr.h,rx:5,class:'chart-guidance-background'}));
+    yGroup.append(svgElement('text',{transform:`translate(${yr.x+14} ${yr.y+27}) rotate(-90)`,'text-anchor':'middle',class:'chart-guidance-text'},nominalY==null?'Lower RMSE':`Toward ${formatNumber(nominal)}%`));
+    const bx=yr.x+11, by=yr.y+57, dy=up?-1:1;
+    yGroup.append(svgElement('path',{d:`M ${bx} ${by-6*dy} V ${by+6*dy} M ${bx-4} ${by+2*dy} L ${bx} ${by+6*dy} L ${bx+4} ${by+2*dy}`,class:'chart-guidance-arrow','data-direction':up?'up':'down'}));
+    svg.append(xGroup,yGroup);
+    const scale=host.clientWidth/width;
+    host._guidanceBounds=[xr,yr].map(r=>({left:r.x*scale,top:r.y*scale,right:(r.x+r.w)*scale,bottom:(r.y+r.h)*scale}));
   }
   document.addEventListener('pointerdown', event => {
     if (activeTip && !activeTip.point.contains(event.target)) closeTip();
@@ -137,7 +148,7 @@
     const nonpositive = candidates.filter(row => usable(row) && (row[config.x] <= 0 || row[config.y] <= 0)).length;
     const unavailable = candidates.length - rows.length - nonpositive;
     if (activeTip?.host === host) closeTip();
-    host._guidanceBounds = null;
+    host._guidanceBounds = [];
     host.replaceChildren();
     host.dataset.domain = suite?.domain || task;
     if (!rows.length) {
@@ -155,6 +166,7 @@
     }
     const width = Math.max(240, Math.round(host.getBoundingClientRect().width));
     const height = 270;
+    host._plotHeight = height * host.clientWidth / width;
     const xAxis = logAxis(rows.map(row => row[config.x]));
     const yValue = row => config.y === 'coverage' ? row.coverage * 100 : row[config.y];
     const nominal = config.y === 'coverage' && numeric(suite.nominal_coverage) && suite.nominal_coverage > 0 && suite.nominal_coverage <= 1 ? suite.nominal_coverage * 100 : config.y === 'coverage' ? 95 : null;
