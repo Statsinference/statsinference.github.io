@@ -67,7 +67,10 @@
   // the other indicator. Narrow viewports use the same SVG coordinates.
   function drawGuidance(svg, host, box, plotW, plotH, positions, nominalY, nominal, width) {
     const xW = Math.min(96, Math.max(84, plotW - 12)), xH = 20;
-    const yW = 22, yH = 70;
+    const yLabel = nominalY == null ? 'Lower RMSE' : `Toward ${formatNumber(nominal)}%`;
+    // The rotated label and its arrow occupy separate vertical bands.
+    const labelExtent = yLabel.length * 6;
+    const yW = 22, yH = Math.min(plotH-8, Math.max(90, Math.ceil(labelExtent+30)));
     function collidesPoint(r) {
       return positions.some(p => p.x >= r.x - 9 && p.x <= r.x + r.w + 9 && p.y >= r.y - 9 && p.y <= r.y + r.h + 9);
     }
@@ -83,15 +86,15 @@
       // needed to preserve the data and reference-line whitespace.
       const xr = {x:box.left+4+Math.max(0,plotW-xW-8)*j/10,
                   y:box.top+plotH-xH-4-Math.min(76,plotH-xH-8)*k/10,w:xW,h:xH};
-      const yr = {x:box.left+4+Math.min(48,Math.max(0,plotW-yW-8))*k/10,
+      const yr = {x:box.left+4+Math.min(90,Math.max(0,plotW-yW-8))*k/10,
                   y:box.top+4+Math.max(0,plotH-yH-8)*j/10,w:yW,h:yH};
-      if (!collidesTarget(xr)) xs.push({...xr, bad:collidesPoint(xr), distance:k});
-      if (!collidesTarget(yr)) ys.push({...yr, bad:collidesPoint(yr), distance:k});
+      if (!collidesTarget(xr)) xs.push({...xr, bad:collidesPoint(xr), distance:k, along:Math.abs(j-5)});
+      if (!collidesTarget(yr)) ys.push({...yr, bad:collidesPoint(yr), distance:k, along:Math.abs(j-5)});
     }
     let best = null;
     for (const xr of xs) for (const yr of ys) {
       const score = (Number(xr.bad)+Number(yr.bad))*10000 +
-                    Number(overlap(xr,yr))*10000 + xr.distance + yr.distance;
+                    Number(overlap(xr,yr))*10000 + xr.distance + yr.distance + 2*(xr.along + yr.along);
       if (!best || score < best.score) best = {xr,yr,score};
     }
     if (!best) return; // impossible geometry must not obscure reference data
@@ -104,8 +107,8 @@
     const up=nominalY!=null && yr.y>nominalY;
     const yGroup = svgElement('g',{class:'chart-guidance chart-guidance-y','data-axis':'y','data-direction':up?'up':'down','data-x':yr.x,'data-y':yr.y,'data-width':yr.w,'data-height':yr.h,'aria-hidden':'true'});
     yGroup.append(svgElement('rect',{x:yr.x,y:yr.y,width:yr.w,height:yr.h,rx:5,class:'chart-guidance-background'}));
-    yGroup.append(svgElement('text',{transform:`translate(${yr.x+14} ${yr.y+27}) rotate(-90)`,'text-anchor':'middle',class:'chart-guidance-text'},nominalY==null?'Lower RMSE':`Toward ${formatNumber(nominal)}%`));
-    const bx=yr.x+11, by=yr.y+57, dy=up?-1:1;
+    yGroup.append(svgElement('text',{transform:`translate(${yr.x+14} ${yr.y+5+labelExtent/2}) rotate(-90)`,'text-anchor':'middle',class:'chart-guidance-text'},yLabel));
+    const bx=yr.x+11, by=yr.y+yH-12, dy=up?-1:1;
     yGroup.append(svgElement('path',{d:`M ${bx} ${by-6*dy} V ${by+6*dy} M ${bx-4} ${by+2*dy} L ${bx} ${by+6*dy} L ${bx+4} ${by+2*dy}`,class:'chart-guidance-arrow','data-direction':up?'up':'down'}));
     svg.append(xGroup,yGroup);
     const scale=host.clientWidth/width;
