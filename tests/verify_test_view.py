@@ -92,6 +92,69 @@ def headers(page):
             for h in page.locator('#leaderboard thead th').all_inner_texts()]
 
 
+def assert_at_most_four_decimals(text):
+    """Check user-visible numbers while allowing scientific notation."""
+    for token in re.findall(r'(?<![\w.])[-+]?(?:\d+\.\d+|\d+)(?:[eE][-+]?\d+)?', text):
+        mantissa = re.split(r'[eE]', token)[0]
+        if '.' in mantissa:
+            assert len(mantissa.split('.')[1]) <= 4, (token, text)
+
+
+def assert_axis_labels_do_not_overlap(host):
+    boxes = host.locator('.chart-axis-title, .chart-tick').evaluate_all('''nodes => nodes.map(n => {
+        const r=n.getBoundingClientRect();
+        return {kind:n.classList.contains('chart-axis-title')?'title':'tick',
+                text:n.textContent,left:r.left,right:r.right,top:r.top,bottom:r.bottom};
+    })''')
+    assert len([b for b in boxes if b['kind'] == 'title']) == 2
+    assert len([b for b in boxes if b['kind'] == 'tick']) == 10
+    for title in (b for b in boxes if b['kind'] == 'title'):
+        for tick in (b for b in boxes if b['kind'] == 'tick'):
+            overlap_x = min(title['right'], tick['right']) - max(title['left'], tick['left'])
+            overlap_y = min(title['bottom'], tick['bottom']) - max(title['top'], tick['top'])
+            assert not (overlap_x > 1 and overlap_y > 1), (title, tick)
+
+
+def check_chart_tooltip(page, host):
+    point = host.locator('.chart-point').first
+    tip = host.locator('.chart-tooltip')
+    assert tip.count() == 1 and tip.is_hidden()
+    # Focus tests keyboard users and avoids depending on mouse position.
+    point.focus()
+    assert tip.is_visible() and tip.get_attribute('role') == 'tooltip'
+    assert point.get_attribute('role') == 'button'
+    assert point.get_attribute('aria-expanded') == 'true'
+    assert point.get_attribute('aria-controls') == tip.get_attribute('id')
+    assert tip.locator('.chart-tooltip-title').inner_text() == point.get_attribute('data-method')
+    assert tip.locator('.chart-tooltip-row').count() == 2
+    assert_at_most_four_decimals(tip.inner_text())
+    rows = tip.locator('.chart-tooltip-row').all_inner_texts()
+    for text, key in zip(rows, ('data-x', 'data-y')):
+        match = re.search(r'[-+]?(?:\d+\.\d+|\d+)(?:[eE][-+]?\d+)?', text)
+        assert match, text
+        actual, source = float(match.group()), float(point.get_attribute(key))
+        assert abs(actual-source) <= max(.000051, abs(source)*.00051), (text, source)
+    tip_box, host_box = tip.bounding_box(), host.bounding_box()
+    assert tip_box and host_box
+    assert tip_box['x'] >= host_box['x'] - 1
+    assert tip_box['x'] + tip_box['width'] <= host_box['x'] + host_box['width'] + 1
+    assert tip_box['y'] >= host_box['y'] - 1
+    assert tip_box['y'] + tip_box['height'] <= host_box['y'] + host_box['height'] + 1
+    # Escape dismisses a keyboard tooltip; clicking pins it and a second
+    # activation closes it, without changing any results.
+    page.keyboard.press('Escape')
+    assert tip.is_hidden() and point.get_attribute('aria-expanded') == 'false'
+    point.press('Enter')
+    assert tip.is_visible()
+    point.press('Enter')
+    assert tip.is_hidden()
+    page.locator('#rank-metric').focus()
+    point.hover()
+    assert tip.is_visible()
+    page.mouse.move(0, 0)
+    assert tip.is_hidden()
+
+
 def check_chart(page, chart_id, domain, xkey, ykey, suite):
     host = page.locator('#' + chart_id)
     page.wait_for_function('(args)=>{const h=document.getElementById(args.id);return h?.dataset.domain===args.domain && h.querySelector("svg")}',
@@ -109,8 +172,19 @@ def check_chart(page, chart_id, domain, xkey, ykey, suite):
     assert 'logarithmic' in host.locator('svg desc').text_content().lower()
     axes = host.locator('.chart-axis-title').all_text_contents()
     assert len(axes) == 2 and all('log scale' in a.lower() for a in axes), axes
+    guidance = host.locator('.chart-guidance')
+    assert guidance.count() == 1
+    assert guidance.locator('.chart-guidance-arrow[aria-hidden="true"]').count() >= 1
+    guidance_text = guidance.inner_text().lower()
+    if chart_id == 'rmse-time-chart':
+        assert 'shorter time' in guidance_text and 'lower rmse' in guidance_text
+    else:
+        assert 'shorter intervals' in guidance_text and 'coverage closer to' in guidance_text
+        assert str(round(suite['nominal_coverage'] * 100)) + '%' in guidance_text
     # Geometric ticks distinguish a real log axis from relabeled linear axes.
     ticks = [float(t) for t in host.locator('.chart-tick').all_text_contents()]
+    for label in host.locator('.chart-tick').all_text_contents():
+        assert_at_most_four_decimals(label)
     assert len(ticks) == 10, ticks
     for group in (ticks[:5], ticks[5:]):
         gaps = [math.log(group[i+1] / group[i]) for i in range(4)]
@@ -118,6 +192,8 @@ def check_chart(page, chart_id, domain, xkey, ykey, suite):
     if ykey == 'coverage':
         assert math.isclose(float(host.locator('.chart-reference').get_attribute('data-value')),
                             100 * suite['nominal_coverage'], rel_tol=1e-12)
+    assert_axis_labels_do_not_overlap(host)
+    check_chart_tooltip(page, host)
 
 
 errors = []
@@ -127,6 +203,7 @@ with sync_playwright() as p:
     page = browser.new_page(viewport={'width': 1440, 'height': 1050})
     page.on('pageerror', lambda e: errors.append(str(e)))
     load(page)
+    page.evaluate('async()=>{await document.fonts.ready}')
     assert page.title() == 'Statistical Inference Arena'
     assert page.locator('#tab-ate').get_attribute('aria-selected') == 'true'
     assert page.locator('#rank-metric').input_value() == 'rmse'
@@ -172,7 +249,10 @@ with sync_playwright() as p:
             for row in rows.all():
                 identity = row.get_attribute('data-method')
                 formatted = page.evaluate('(id)=>{const r=current().rows.find(r=>(r.source_method||r.method)===id);return metricKeys.map(k=>formatMetric(r,k));}', identity)
-                assert row.locator('td[data-metric]').all_inner_texts() == formatted
+                cells = row.locator('td[data-metric]').all_inner_texts()
+                assert cells == formatted
+                for value in cells:
+                    assert_at_most_four_decimals(value)
 
         # Details open and close without changing metrics or ranks; details are
         # real linked metadata, not an extra method row or a duplicated score.
@@ -187,9 +267,40 @@ with sync_playwright() as p:
         assert row.locator('.method-toggle').get_attribute('aria-expanded') == 'true'
         detail = page.locator('#' + row.locator('.method-toggle').get_attribute('aria-controls'))
         assert detail.is_visible() and detail.locator('.method-detail-grid').count() == 1
+        assert detail.locator('.method-detail-grid > div > strong').all_text_contents() == [
+            'Method', 'Estimator / model', 'Folds / contexts', 'Bootstrap', 'Configuration']
+        assert detail.locator('.method-detail-extra').count() == 1
         assert row.locator('td[data-metric]').all_inner_texts() == before
         row.locator('.method-toggle').click()
         assert page.locator('#leaderboard tbody .method-details-row').count() == 0
+
+    # All expanded methods share aligned detail columns; compare their actual
+    # screen positions rather than only checking they have the same labels.
+    page.locator('[data-t="ate"]').click()
+    page.locator('.method-toggle').first.click()
+    page.locator('.method-toggle').last.click()
+    grids = page.locator('.method-details-row .method-detail-grid')
+    assert grids.count() == 2
+    columns = [grid.locator(':scope > div:not(.method-detail-extra)').all() for grid in grids.all()]
+    assert all(len(row) == 4 for row in columns)
+    for first, second in zip(*columns):
+        a, b = first.bounding_box(), second.bounding_box()
+        assert a and b and abs(a['x'] - b['x']) <= 1 and abs(a['width'] - b['width']) <= 1
+    for grid in grids.all():
+        extra = grid.locator('.method-detail-extra')
+        assert extra.evaluate('(e)=>getComputedStyle(e).gridColumnStart') == '1'
+        assert extra.evaluate('(e)=>getComputedStyle(e).gridColumnEnd') == '-1'
+
+    page.locator('[data-t="mediation"]').click()
+    pfn_row = page.locator('#leaderboard tbody tr[data-method]').filter(has_text='MediPFN')
+    pfn_row.locator('.method-toggle').click()
+    pfn = page.locator('#' + page.locator('#leaderboard tbody tr[data-method]').filter(has_text='MediPFN').locator('.method-toggle').get_attribute('aria-controls'))
+    pfn_links = pfn.locator('.method-reference-link')
+    assert pfn_links.count() >= 2
+    assert pfn_links.filter(has_text='Paper').count() == 1
+    assert pfn_links.filter(has_text='Hugging Face').count() == 1
+    assert pfn_links.filter(has_text='Paper').get_attribute('href').startswith('https://')
+    assert pfn_links.filter(has_text='Hugging Face').get_attribute('href') == 'https://huggingface.co/shibo769/MediPFN'
 
     page.locator('[data-t="iv"]').click()
     page.locator('[data-fam="classical"]').click()
@@ -225,6 +336,20 @@ with sync_playwright() as p:
     mobile.locator('[data-t="proximal"]').click()
     assert mobile.locator('#menu-btn').get_attribute('aria-expanded') == 'false'
     assert mobile.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
+    mobile.wait_for_function('document.querySelector("#rmse-time-chart")?.dataset.domain==="proximal" && document.querySelector("#rmse-time-chart svg")')
+    mobile.evaluate('async()=>{await document.fonts.ready}')
+    for chart_id in ('rmse-time-chart', 'coverage-length-chart'):
+        host = mobile.locator('#' + chart_id)
+        assert_axis_labels_do_not_overlap(host)
+        point, tip = host.locator('.chart-point').first, host.locator('.chart-tooltip')
+        point.tap()
+        assert tip.is_visible() and point.get_attribute('aria-expanded') == 'true'
+        assert_at_most_four_decimals(tip.inner_text())
+        box, area = tip.bounding_box(), host.bounding_box()
+        assert box['x'] >= area['x'] - 1 and box['x'] + box['width'] <= area['x'] + area['width'] + 1
+        assert box['y'] >= area['y'] - 1 and box['y'] + box['height'] <= area['y'] + area['height'] + 1
+        mobile.locator('#hero-title').tap()
+        assert tip.is_hidden()
     mobile.locator('.method-toggle').first.click()
     assert mobile.locator('.method-details-row').count() == 1
     assert mobile.evaluate('document.documentElement.scrollWidth<=innerWidth+1')

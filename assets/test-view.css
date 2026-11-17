@@ -41,7 +41,8 @@
 #leaderboard .method-details-row>td{padding:0;white-space:normal;background:var(--surface)}
 #leaderboard .method-details-row:hover{background:transparent}
 #leaderboard .method-details{padding:17px 25px 19px 66px;border-top:1px solid var(--line);border-left:3px solid var(--accent);white-space:normal}
-#leaderboard .method-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px 24px;max-width:950px}
+#leaderboard .method-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 24px;max-width:950px}
+#leaderboard .method-detail-extra{grid-column:1/-1}
 #leaderboard .method-detail-grid strong{display:block;font:500 10px/1.4 var(--body);color:var(--quiet);text-transform:uppercase;letter-spacing:.04em}
 #leaderboard .method-detail-grid p{margin:5px 0 0;font:12px/1.55 var(--body);color:var(--fg);overflow-wrap:anywhere}
 #leaderboard .method-reference-links{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px}

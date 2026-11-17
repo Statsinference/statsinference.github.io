@@ -104,7 +104,7 @@ function formatMetric(r,k){
  const v=r[k];if(!finite(v))return '—';
  const approx=r.approximate_metrics?.includes(k)?'≈':'';
  if(k==='coverage')return approx+(v*100).toFixed(2)+'%';
- const a=Math.abs(v),digits=r.display_precision?.[k]??current()?.display_precision?.[k]??(k==='time_s'?(current()?.domain==='mediation'?2:a<.1?4:3):4);
+ const a=Math.abs(v),digits=Math.min(4,r.display_precision?.[k]??current()?.display_precision?.[k]??(k==='time_s'?(current()?.domain==='mediation'?2:a<.1?4:3):4));
  const value=a!==0&&(a>=10000||a<.0001)?a.toExponential(2):a.toFixed(digits);
  return approx+(v<0?'−':k==='bias'&&v>0?'+':'')+value;
 }
@@ -112,33 +112,35 @@ function formatMetric(r,k){
 // the submitted evaluation omits a parameter, explicitly say it is unreported.
 function methodFacts(r,s){
  const baseline=r.family==='classical';
- const facts=[['Method',baseline?'Random forest':r.method]];
+ const name=baseline?(s.id==='proximal-unified-2026-11-16-normalized'?'Random forest–based proximal baseline':'Random forest'):r.method;
+ let estimator=baseline?'Random forest':r.method,folds='Not reported',bootstrap='Not reported',configuration='';
  if(['ate-fixed-collection-report','cate-fixed-collection-report'].includes(s.id)){
   if(baseline){
-   facts.push(['Estimator',s.domain==='ate'?'AIPW with treatment-stratified cross-fitting':'T-learner ensemble']);
-   facts.push(['Folds','5'],['Forest','200 trees; minimum leaf size 5'],['Bootstrap','50 full row-bootstrap refits; percentile intervals']);
-   if(s.domain==='ate')facts.push(['Propensity clipping','0.01 to 0.99']);
+   estimator=s.domain==='ate'?'AIPW with treatment-stratified cross-fitting':'T-learner ensemble';
+   folds='5';bootstrap='50 full row-bootstrap refits; 95% percentile intervals';
+   configuration='200 trees; minimum leaf size 5; n_jobs=1; scikit-learn 1.7.2; grouped treatment-stratified bootstrap resplits'+(s.domain==='ate'?'; propensity clipping 0.01–0.99':'; fixed CATE query');
   }else{
-   facts.push(['Model','CausalPFN 0.1.5; official causalpfn_v0.pt weights'],['Evaluation','Native point and interval workflow; no additional five-fold wrapper'],['Uncertainty','10,000 predictive draws; calibrate=False']);
+   estimator='CausalPFN 0.1.5; official causalpfn_v0.pt weights';
+   folds='Native workflow; no additional five-fold wrapper';
+   configuration='10,000 predictive draws; calibrate=False';
   }
  }else if(s.id==='mediation-fivefold-2026-11-16'){
-  facts.push(['Evaluation folds','5 treatment-stratified folds']);
-  if(baseline)facts.push(['Forest','200 trees; minimum leaf size 5'],['Bootstrap','50 full row-bootstrap refits; percentile intervals']);
-  else facts.push(['Checkpoint','Trained with two folds; evaluated with five folds without recalibration']);
+  folds='5 treatment-stratified folds';
+  if(baseline){estimator='Cross-fitted EIF for NIE₁';folds='5 treatment-stratified outer folds; 2 inner pseudo-label folds';bootstrap='50 full row-bootstrap refits; 95% percentile interval';configuration='Random forest classifiers/regressors: 200 trees; minimum leaf size 5; n_jobs=1; propensity clipping 0.01–0.99; scikit-learn 1.7.2';}
+  else configuration='Checkpoint trained with two folds; evaluated with five folds without recalibration';
  }else if(s.id==='iv-v03-test'){
-  facts.push(['Folds','5 (as stated in the supplied results)']);
-  if(baseline)facts.push(['Source configuration','Trimmed random forest + bootstrap'],['Bootstrap replicates','Not reported']);
-  else facts.push(['Version','IV-PFN v0.3']);
+  folds='5 (as stated in the supplied results)';
+  if(baseline){estimator='Trimmed random forest + bootstrap';configuration='Bootstrap replicate count not reported';}
+  else estimator='IV-PFN v0.3';
  }else if(s.id==='did-test-2026-11-16'){
-  facts.push(['Estimator','Normalized DR-DiD score'],['Folds','5']);
-  if(baseline)facts.push(['Forest','200 trees; minimum leaf size 5'],['Bootstrap','50 full row-bootstrap refits'],['Interval','95% normal interval using bootstrap standard errors']);
-  else facts.push(['Backbone','Frozen TabPFN-3.5 with residual adapters'],['Interval','95% normal interval using influence-function standard errors']);
+  estimator='Normalized DR-DiD score';folds='5';
+  if(baseline){bootstrap='50 full row-bootstrap refits with new splits';configuration='Propensity classification and outcome-change regression forests: 200 trees; minimum leaf size 5; 95% normal interval using bootstrap standard errors';}
+  else configuration='Frozen TabPFN-3.5 with residual adapters; 95% normal interval using influence-function standard errors';
  }else if(s.id==='proximal-unified-2026-11-16-normalized'){
-  if(baseline)facts.push(['Estimator','Proximal series-IV / sieve-GMM'],['Folds','5-fold out-of-fold nuisance predictions'],['Forest','200 trees; minimum leaf size 5'],['Bootstrap','50 full-pipeline row-bootstrap refits; percentile interval']);
-  else facts.push(['Evaluation','Five-context distribution mixture; not nuisance cross-fitting'],['Interval','Quantiles of the five-context mixture distribution']);
- }else if(r.configuration)facts.push(['Configuration',r.configuration]);
- else facts.push(['Configuration','Not reported']);
- return facts;
+  if(baseline){estimator='Proximal series-IV / sieve-GMM with RF nuisance models';folds='5-fold out-of-fold E[W, W² | A, X, Z] predictions';bootstrap='50 full-pipeline row-bootstrap refits; 95% percentile interval';configuration='RF nuisance and W | X query models: 200 trees; minimum leaf size 5; n_jobs=1; scikit-learn 1.7.2; 20-column quadratic bridge; ridge 10⁻⁴ and instrument ridge 10⁻⁶';}
+  else{folds='Five-context distribution mixture; not nuisance cross-fitting';configuration='Interval: quantiles of the five-context mixture distribution';}
+ }else configuration=r.configuration||'';
+ return [['Method',name],['Estimator / model',estimator],['Folds / contexts',folds],['Bootstrap',bootstrap],['Configuration',configuration||'Not reported']];
 }
 function methodKey(r){return [current()?.id,r.family,r.source_method||r.method,r.configuration||''].join('::');}
 function methodCell(r,index){
@@ -148,16 +150,15 @@ function methodCell(r,index){
 }
 function methodDetails(r,index){
  const s=current(),ref=ArenaMethodReferences.lookup(task,r),facts=methodFacts(r,s);
- const links=[];
- for(const [kind,label] of [['paper','Paper'],['huggingface','Hugging Face']]){
-  const item=ref?.[kind],url=ArenaMethodReferences.safeURL(item?.url,kind);
-  if(url){
-   const title=item.title||label;
-   links.push(`<div><a class="method-reference-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}: ${esc(title)} ↗</a>${item.citation?`<p>${esc(item.citation)}</p>`:''}</div>`);
-  }
- }
- const references=r.family==='classical'?'':links.length?`<div class="method-reference-links"><strong>Method references</strong> ${links.join(' ')}</div>`:'<div class="method-reference-links"><strong>Method references</strong> Not provided for this evaluated version.</div>';
- return `<tr class="method-details-row" id="method-details-${index}"><td colspan="8"><div class="method-details"><div class="method-detail-grid">${facts.map(([label,value])=>`<div><strong>${esc(label)}</strong><p>${esc(value)}</p></div>`).join('')}</div>${references}</div></td></tr>`;
+ const references=[];
+ const paper=ref?.paper,paperURL=ArenaMethodReferences.safeURL(paper?.url,'paper');
+ if(paperURL)references.push(`<div><strong>Method reference</strong> <a class="method-reference-link" href="${esc(paperURL)}" target="_blank" rel="noopener noreferrer">${esc(paper.title||'Paper')} ↗</a>${paper.citation?`<p>${esc(paper.citation)}</p>`:''}</div>`);
+ // The DR-DiD paper describes the estimator, not a PFN-DiD-specific model.
+ if(s.id==='did-test-2026-11-16')references.push('<div><strong>DR-DiD estimator reference</strong> <a class="method-reference-link" href="https://arxiv.org/abs/1812.01723" target="_blank" rel="noopener noreferrer">Sant’Anna and Zhao, Doubly Robust Difference-in-Differences Estimators ↗</a></div>');
+ const modelURL=ArenaMethodReferences.safeURL(ref?.huggingface?.url,'huggingface');
+ if(modelURL)references.push(`<div><strong>Model</strong> <a class="method-reference-link" href="${esc(modelURL)}" target="_blank" rel="noopener noreferrer">Hugging Face ↗</a></div>`);
+ const referenceSection=references.length?`<div class="method-reference-links">${references.join('')}</div>`:'';
+ return `<tr class="method-details-row" id="method-details-${index}"><td colspan="8"><div class="method-details"><div class="method-detail-grid">${facts.map(([label,value],i)=>`<div${i===4?' class="method-detail-extra"':''}><strong>${esc(label)}</strong><p>${esc(value)}</p></div>`).join('')}</div>${referenceSection}</div></td></tr>`;
 }
 // Rank within the current domain only. Missing results always sort last.
 function metricScore(row,key){

@@ -6,12 +6,52 @@
   if (!section || !table || typeof visibleRows !== 'function') return;
   const NS = 'http://www.w3.org/2000/svg';
   const charts = [
-    {id:'rmse-time-chart', x:'time_s', y:'rmse', xLabel:'Time (s, log scale)', yLabel:'RMSE (log scale)', title:'RMSE vs Time'},
-    {id:'coverage-length-chart', x:'length', y:'coverage', xLabel:'Mean interval length (log scale)', yLabel:'Coverage (%, log scale)', title:'Coverage vs Mean Interval Length'}
+    {id:'rmse-time-chart', x:'time_s', y:'rmse', xLabel:'Time (s, log scale)', yLabel:'RMSE (log scale)', xDetail:'Time', yDetail:'RMSE', title:'RMSE vs Time'},
+    {id:'coverage-length-chart', x:'length', y:'coverage', xLabel:'Mean interval length (log scale)', yLabel:'Coverage (%, log scale)', xDetail:'Mean interval length', yDetail:'Coverage', title:'Coverage vs Mean Interval Length'}
   ];
   const numeric = value => typeof value === 'number' && Number.isFinite(value);
   const familyClass = row => ['pfn','classical'].includes(row.family) ? row.family : 'other';
   const methodName = row => row.family === 'classical' ? 'Baseline' : row.method;
+  let activeTip = null;
+  function closeTip() {
+    if (!activeTip) return;
+    activeTip.tooltip.hidden = true;
+    activeTip.point.setAttribute('aria-expanded', 'false');
+    activeTip = null;
+  }
+  function formatNumber(value) {
+    const magnitude = Math.abs(value);
+    if (magnitude !== 0 && (magnitude < 0.0001 || magnitude >= 10000000)) {
+      return value.toExponential(3).replace(/(\.\d*?[1-9])0+e/, '$1e').replace(/\.0+e/, 'e');
+    }
+    return String(Number(value.toFixed(4)));
+  }
+  function detailValue(row, key, suite) {
+    const value = key === 'coverage' ? Number((row[key] * 100).toPrecision(12)) : row[key];
+    const display = formatNumber(value);
+    const wasRounded = Math.abs(Number(display) - value) > Math.max(1e-12, Math.abs(value) * 1e-12);
+    const approximate = row.approximate_metrics?.includes(key) || wasRounded ? '≈' : '';
+    const unit = key === 'coverage' ? '%' : key === 'time_s' ? ' s' : suite.metric_scale === 'normalized' ? ' (normalized by outcome SD)' : suite.metric_scale === 'original' ? ' (original units)' : '';
+    return approximate + display + unit;
+  }
+  function showTip(host, tooltip, point, cx, cy, pinned = false) {
+    if (activeTip && activeTip.point !== point) closeTip();
+    activeTip = {host, tooltip, point, pinned};
+    tooltip.hidden = false;
+    point.setAttribute('aria-expanded', 'true');
+    // Keep the card inside the chart at both narrow and wide screen widths.
+    const available = host.clientWidth;
+    const left = Math.max(4, Math.min(cx - tooltip.offsetWidth/2, available - tooltip.offsetWidth - 4));
+    const top = cy - tooltip.offsetHeight - 12 >= 0 ? cy - tooltip.offsetHeight - 12 : cy + 12;
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  }
+  document.addEventListener('pointerdown', event => {
+    if (activeTip && !activeTip.point.contains(event.target)) closeTip();
+  });
+  section.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeTip();
+  });
   function svgElement(tag, attrs = {}, text) {
     const node = document.createElementNS(NS, tag);
     for (const [key,value] of Object.entries(attrs)) node.setAttribute(key, String(value));
@@ -31,9 +71,7 @@
     return {min,max,ticks};
   }
   function tick(value) {
-    if (value === 0) return '0';
-    if (Math.abs(value) >= 10000 || Math.abs(value) < .001) return value.toExponential(1);
-    return Number(value.toPrecision(5)).toString();
+    return formatNumber(value);
   }
   function renderChart(config) {
     const host = document.getElementById(config.id);
@@ -44,6 +82,7 @@
     const rows = candidates.filter(row => usable(row) && row[config.x] > 0 && row[config.y] > 0);
     const nonpositive = candidates.filter(row => usable(row) && (row[config.x] <= 0 || row[config.y] <= 0)).length;
     const unavailable = candidates.length - rows.length - nonpositive;
+    if (activeTip?.host === host) closeTip();
     host.replaceChildren();
     host.dataset.domain = suite?.domain || task;
     if (!rows.length) {
@@ -61,13 +100,16 @@
     }
     const width = Math.max(240, Math.round(host.getBoundingClientRect().width));
     const height = 270;
-    const box = {left:57, right:18, top:24, bottom:48};
-    const plotW = width - box.left - box.right;
-    const plotH = height - box.top - box.bottom;
     const xAxis = logAxis(rows.map(row => row[config.x]));
     const yValue = row => config.y === 'coverage' ? row.coverage * 100 : row[config.y];
     const nominal = config.y === 'coverage' && numeric(suite.nominal_coverage) && suite.nominal_coverage > 0 && suite.nominal_coverage <= 1 ? suite.nominal_coverage * 100 : config.y === 'coverage' ? 95 : null;
     const yAxis = logAxis([...rows.map(yValue), ...(nominal ? [nominal] : [])], config.y === 'coverage' ? 100 : Infinity);
+    // Reserve space using the widest formatted tick, so numbers never run
+    // into the rotated y-axis title, including scientific notation.
+    const maxTickChars = Math.max(...yAxis.ticks.map(value => tick(value).length));
+    const box = {left:Math.max(78, Math.ceil(40 + maxTickChars * 6.5)), right:18, top:24, bottom:48};
+    const plotW = width - box.left - box.right;
+    const plotH = height - box.top - box.bottom;
     const x = value => box.left + (Math.log10(value) - xAxis.min) / (xAxis.max-xAxis.min) * plotW;
     const y = value => box.top + (1 - (Math.log10(value) - yAxis.min) / (yAxis.max-yAxis.min)) * plotH;
     const svg = svgElement('svg', {viewBox:`0 0 ${width} ${height}`, role:'group', 'aria-labelledby':config.id+'-title', 'aria-describedby':config.id+'-desc', 'data-domain':suite.domain});
@@ -83,7 +125,7 @@
     }
     svg.append(svgElement('path',{d:`M ${box.left} ${box.top} V ${height-box.bottom} H ${width-box.right}`,fill:'none',class:'chart-axis'}));
     svg.append(svgElement('text',{x:box.left+plotW/2,y:height-8,'text-anchor':'middle',class:'chart-axis-title'},config.xLabel));
-    svg.append(svgElement('text',{transform:`translate(14 ${box.top+plotH/2}) rotate(-90)`,'text-anchor':'middle',class:'chart-axis-title'},config.yLabel));
+    svg.append(svgElement('text',{transform:`translate(12 ${box.top+plotH/2}) rotate(-90)`,'text-anchor':'middle',class:'chart-axis-title'},config.yLabel));
     if (config.y === 'coverage') {
       if (nominal > 0 && nominal <= 100) {
         svg.append(svgElement('line',{x1:box.left,y1:y(nominal),x2:width-box.right,y2:y(nominal),class:'chart-reference','data-value':nominal}));
@@ -92,11 +134,45 @@
     }
     const legend = document.createElement('div');
     legend.className = 'chart-legend';
+    const tooltip = document.createElement('div');
+    tooltip.id = config.id + '-tooltip';
+    tooltip.className = 'chart-tooltip';
+    tooltip.setAttribute('role', 'tooltip');
+    tooltip.hidden = true;
     for (const row of rows) {
       const cx = x(row[config.x]), cy = y(yValue(row));
-      const label = `${methodName(row)} — ${config.xLabel}: ${formatMetric(row,config.x)}; ${config.yLabel}: ${formatMetric(row,config.y)}`;
-      const point = svgElement('g',{class:'chart-point '+familyClass(row),tabindex:0,role:'img','aria-label':label,'data-method':methodName(row),'data-x':row[config.x],'data-y':yValue(row),transform:`translate(${cx} ${cy})`});
-      point.append(svgElement('title',{},label));
+      const label = `${methodName(row)}${row.configuration ? ', '+row.configuration : ''}. ${config.xDetail}: ${detailValue(row,config.x,suite)}. ${config.yDetail}: ${detailValue(row,config.y,suite)}.`;
+      const point = svgElement('g',{class:'chart-point '+familyClass(row),tabindex:0,role:'button','aria-label':label,'aria-controls':tooltip.id,'aria-expanded':'false','data-method':methodName(row),'data-x':row[config.x],'data-y':yValue(row),transform:`translate(${cx} ${cy})`});
+      function populateTooltip() {
+        const title = document.createElement('strong');
+        title.className = 'chart-tooltip-title'; title.textContent = methodName(row);
+        const description = document.createElement('div');
+        description.className = 'chart-tooltip-configuration'; description.textContent = row.configuration || '';
+        const xline = document.createElement('div');
+        xline.className = 'chart-tooltip-row'; xline.textContent = `${config.xDetail}: ${detailValue(row,config.x,suite)}`;
+        const yline = document.createElement('div');
+        yline.className = 'chart-tooltip-row'; yline.textContent = `${config.yDetail}: ${detailValue(row,config.y,suite)}`;
+        tooltip.replaceChildren(...(row.configuration ? [title, description, xline, yline] : [title, xline, yline]));
+      }
+      function show(pinned = false) {
+        populateTooltip();
+        const scale = host.clientWidth / width;
+        showTip(host, tooltip, point, cx * scale, cy * scale, pinned);
+      }
+      function toggle() {
+        if (activeTip?.point === point && activeTip.pinned) closeTip();
+        else show(true);
+      }
+      point.addEventListener('pointerenter', () => show(activeTip?.point === point && activeTip.pinned));
+      point.addEventListener('pointerleave', () => {
+        if (activeTip?.point === point && !activeTip.pinned && document.activeElement !== point) closeTip();
+      });
+      point.addEventListener('focus', () => show(activeTip?.point === point && activeTip.pinned));
+      point.addEventListener('blur', () => { if (activeTip?.point === point && !activeTip.pinned) closeTip(); });
+      point.addEventListener('click', toggle);
+      point.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(); }
+      });
       point.append(svgElement('circle',{r:9,class:'chart-focus-ring'}));
       point.append(row.family === 'classical' ? svgElement('path',{d:'M 0 -6 L 6 0 L 0 6 L -6 0 Z',class:'chart-marker'}) : svgElement('circle',{r:5.5,class:'chart-marker'}));
       svg.append(point);
@@ -104,7 +180,25 @@
       const marker = document.createElement('i');marker.className='chart-legend-marker '+familyClass(row);marker.setAttribute('aria-hidden','true');
       item.append(marker,document.createTextNode(methodName(row)));legend.append(item);
     }
-    host.append(svg,legend);
+    const guidance = document.createElement('div');
+    guidance.className = 'chart-guidance';
+    const guidanceArrow = document.createElement('span');
+    guidanceArrow.className = 'chart-guidance-arrow';
+    guidanceArrow.setAttribute('aria-hidden', 'true');
+    guidanceArrow.textContent = config.y === 'coverage' ? '←' : '↙';
+    const guidanceText = document.createElement('span');
+    guidanceText.textContent = config.y === 'coverage' ? 'Shorter intervals' : 'Shorter time · lower RMSE';
+    guidance.append(guidanceArrow, guidanceText);
+    if (config.y === 'coverage') {
+      const targetArrow = document.createElement('span');
+      targetArrow.className = 'chart-guidance-arrow';
+      targetArrow.setAttribute('aria-hidden', 'true');
+      targetArrow.textContent = '↕';
+      const targetText = document.createElement('span');
+      targetText.textContent = `Coverage closer to ${formatNumber(nominal)}%`;
+      guidance.append(targetArrow, targetText);
+    }
+    host.append(svg,guidance,legend,tooltip);
     if (nonpositive || unavailable) {
       const note = document.createElement('p');
       note.className = 'chart-note';

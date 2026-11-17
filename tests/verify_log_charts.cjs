@@ -9,11 +9,15 @@ class Element {
   constructor(tag='div') {
     this.tag=tag; this.children=[]; this.dataset={}; this.attrs={};
     this.textContent=''; this.className='';
+    this.listeners={}; this.style={}; this.clientWidth=600;
+    this.offsetWidth=120; this.offsetHeight=50; this.hidden=false;
   }
   setAttribute(k,v) { this.attrs[k]=String(v); }
   append(...xs) { this.children.push(...xs); }
   replaceChildren(...xs) { this.children=xs; }
   getBoundingClientRect() { return {width:600}; }
+  addEventListener(name, fn) { this.listeners[name]=fn; }
+  contains(target) { return target === this; }
 }
 
 function draw(rows) {
@@ -24,7 +28,8 @@ function draw(rows) {
   const ctx = {
     document: {
       getElementById:id=>hosts[id], createElementNS:(_,t)=>new Element(t),
-      createElement:t=>new Element(t), createTextNode:t=>({textContent:t})
+      createElement:t=>new Element(t), createTextNode:t=>({textContent:t}),
+      addEventListener(){}
     },
     visibleRows:()=>rows, current:()=>({domain:'ate',nominal_coverage:.95}),
     task:'ate', loadError:'', loaded:true, formatMetric:(r,k)=>String(r[k]),
@@ -53,6 +58,16 @@ for (const axis of [0,1]) {
   assert(Math.abs((b-a)-(c-b)) < 1e-8, 'each decade must have equal spacing');
 }
 assert(hosts['rmse-time-chart'].children.some(x=>x.className==='chart-note' && x.textContent.includes('1 nonpositive and 1 missing')));
+const tip=hosts['rmse-time-chart'].children.find(x=>x.className==='chart-tooltip');
+assert(tip.hidden);
+points[0].listeners.pointerenter();
+assert(!tip.hidden);
+assert.equal(points[0].attrs['aria-expanded'],'true');
+assert.equal(tip.children[0].textContent,'One');
+assert(tip.children[1].textContent.includes('Time: 1'));
+assert(tip.children[2].textContent.includes('RMSE: 0.1'));
+points[0].listeners.pointerleave();
+assert(tip.hidden);
 const coverage = hosts['coverage-length-chart'].children[0];
 assert(coverage.children.some(x=>x.attrs['data-value']==='95'), '95% nominal reference retained');
 assert(coverage.children.some(x=>x.tag==='desc' && x.textContent.includes('logarithmic')));

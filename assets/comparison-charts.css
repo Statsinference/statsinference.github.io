@@ -2,7 +2,7 @@
 #methodology.comparison-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:36px 0 0;scroll-margin-top:80px}
 .comparison-charts .comparison-card{min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:20px 18px 14px}
 .comparison-charts h3{font:550 14px/1.5 var(--body);margin:0 0 12px}
-.comparison-charts .comparison-plot{min-width:0;min-height:290px}
+.comparison-charts .comparison-plot{position:relative;min-width:0;min-height:290px}
 .comparison-charts svg{display:block;width:100%;height:auto;overflow:visible;font-family:var(--body)}
 .comparison-charts .chart-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4}
 .comparison-charts .chart-axis{stroke:var(--line-strong);stroke-width:1}
@@ -10,7 +10,7 @@
 .comparison-charts .chart-axis-title{fill:var(--muted);font:11px var(--body)}
 .comparison-charts .chart-reference{stroke:var(--muted);stroke-width:1.1;stroke-dasharray:5 4}
 .comparison-charts .chart-reference-label{fill:var(--muted);font:10px var(--mono)}
-.comparison-charts .chart-point{outline:none;cursor:default}
+.comparison-charts .chart-point{outline:none;cursor:pointer}
 .comparison-charts .chart-marker{stroke:var(--surface);stroke-width:1.5}
 .comparison-charts .chart-point.pfn{fill:var(--pfn)}
 .comparison-charts .chart-point.classical{fill:var(--classical)}
@@ -24,6 +24,13 @@
 .comparison-charts .chart-legend-marker.classical{background:var(--classical);border-radius:0;transform:rotate(45deg)}
 .comparison-charts .chart-empty{display:grid;place-items:center;min-height:275px;color:var(--quiet);font-size:12px;text-align:center}
 .comparison-charts .chart-note{margin:8px 0 0;color:var(--muted);font:11px/1.5 var(--body);text-align:center}
+.comparison-charts .chart-tooltip{position:absolute;z-index:5;max-width:min(240px,calc(100% - 8px));padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);box-shadow:0 6px 22px rgba(0,0,0,.13);color:var(--fg);font:12px/1.5 var(--body);overflow-wrap:anywhere;pointer-events:none}
+.comparison-charts .chart-tooltip[hidden]{display:none}
+.comparison-charts .chart-tooltip-title{display:block;margin:0 0 3px;font-weight:650}
+.comparison-charts .chart-tooltip-configuration{margin-bottom:4px;color:var(--muted);font-size:11px}
+.comparison-charts .chart-tooltip-row{font-variant-numeric:tabular-nums}
+.comparison-charts .chart-guidance{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px 6px;margin:5px 0 0;color:var(--muted);font:11px/1.45 var(--body);text-align:center}
+.comparison-charts .chart-guidance-arrow{font-size:16px;line-height:1;color:var(--pfn)}
 @media(max-width:1000px){#methodology.comparison-charts{grid-template-columns:1fr}}
 @media(max-width:480px){.comparison-charts .comparison-card{padding:16px 12px 12px}.comparison-charts .comparison-plot{min-height:280px}}
 
