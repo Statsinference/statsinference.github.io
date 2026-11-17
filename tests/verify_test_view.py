@@ -50,6 +50,7 @@ if not LOCAL:
     paths = ['index.html', 'assets/test-view.js', 'assets/test-view.css',
              'assets/test-references.js', 'assets/comparison-charts.js',
              'assets/comparison-charts.css', 'assets/domain-illustrations.js',
+             'assets/arena-overview.js', 'assets/arena-overview.css',
              'data/results.json', 'data/mediation-fivefold.json',
              'data/iv-v03.json', 'data/unified-test-2026-11-16.json']
     for attempt in range(40):
@@ -115,6 +116,103 @@ def assert_axis_labels_do_not_overlap(host):
             assert not (overlap_x > 1 and overlap_y > 1), (title, tick)
 
 
+
+def assert_guidance_inside_plot(host, chart_id, nominal):
+    """Check rendered geometry, not just the guide text."""
+    svg = host.locator('svg')
+    guide = svg.locator('.chart-guidance')
+    assert guide.count() == 1
+    arrows = guide.locator('path.chart-guidance-arrow')
+    assert arrows.count() == 2
+    for arrow in arrows.all():
+        bounds = arrow.bounding_box()
+        assert arrow.is_visible() and bounds and bounds['width'] > 1 and bounds['height'] > 1
+    text = guide.text_content().lower()
+    if chart_id == 'rmse-time-chart':
+        assert 'shorter time' in text and 'lower rmse' in text
+    else:
+        assert 'shorter interval' in text and str(round(nominal * 100)) + '%' in text
+    plot = svg.evaluate('''svg => {
+        const vals=['data-plot-left','data-plot-top','data-plot-width','data-plot-height'].map(a=>Number(svg.getAttribute(a)));
+        if (vals.some(v=>!Number.isFinite(v))) return null;
+        const [x,y,w,h]=vals, ctm=svg.getScreenCTM();
+        if (!ctm) return null;
+        const a=new DOMPoint(x,y).matrixTransform(ctm), b=new DOMPoint(x+w,y+h).matrixTransform(ctm);
+        return {left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),
+                top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)};
+    }''')
+    box = guide.bounding_box()
+    assert plot and box, (chart_id, plot, box)
+    assert box['x'] >= plot['left'] - 1 and box['y'] >= plot['top'] - 1, (chart_id, plot, box)
+    assert box['x'] + box['width'] <= plot['right'] + 1, (chart_id, plot, box)
+    assert box['y'] + box['height'] <= plot['bottom'] + 1, (chart_id, plot, box)
+    for marker in svg.locator('.chart-point .chart-marker').all():
+        dot = marker.bounding_box()
+        assert dot
+        overlap_x = min(box['x']+box['width'], dot['x']+dot['width'])-max(box['x'],dot['x'])
+        overlap_y = min(box['y']+box['height'], dot['y']+dot['height'])-max(box['y'],dot['y'])
+        assert not (overlap_x > 0 and overlap_y > 0), (chart_id, box, dot)
+    if chart_id == 'coverage-length-chart':
+        line = svg.locator('.chart-reference').bounding_box()
+        assert line
+        assert not (box['y'] < line['y'] < box['y'] + box['height']), (chart_id, box, line)
+
+
+def assert_navigation_groups(page):
+    groups = page.locator('#tabs .domain-group')
+    assert groups.count() == 2
+    names = [group.locator('.domain-group-heading').text_content().strip() for group in groups.all()]
+    assert names == ['Causal Inference', 'Others'], names
+    for group, expected in zip(groups.all(), (DOMAINS[:6], DOMAINS[6:])):
+        assert group.get_attribute('role') == 'group'
+        heading = group.locator('.domain-group-heading')
+        assert group.get_attribute('aria-labelledby') == heading.get_attribute('id')
+        assert group.locator('[role="tab"][data-t]').evaluate_all('nodes=>nodes.map(n=>n.dataset.t)') == expected
+
+
+def assert_overview(page, suites):
+    area = page.locator('#arena-overview-stats')
+    assert area.is_visible()
+    # Reflect only the first active suite per domain, same as the leaderboard.
+    first = {}
+    for s in suites:
+        first.setdefault(s['domain'], s)
+    valid = lambda row: any(isinstance(row.get(k), (int,float)) and
+                            not isinstance(row.get(k), bool) and math.isfinite(row[k]) for k in KEYS)
+    values = {
+        'domains': page.locator('#tabs [data-t]').count(),
+        'active-domains': sum(any(valid(r) for r in s['rows']) for s in first.values()),
+        'method-entries': sum(sum(valid(r) for r in s['rows']) for s in first.values()),
+        'metrics': len(KEYS),
+    }
+    for key, expected in values.items():
+        assert area.locator(f'[data-overview-stat="{key}"]').inner_text().strip() == str(expected), key
+
+
+def assert_medals(page, suite, key):
+    nominal = suite.get('nominal_coverage', .95)
+    score = lambda r: abs(r[key]) if key == 'bias' else abs(r[key] - nominal) if key == 'coverage' else r[key]
+    ordered = sorted(suite['rows'], key=score)
+    rank_by_id = {}
+    previous, rank = None, 0
+    for i, row in enumerate(ordered):
+        if i == 0 or score(row) != previous:
+            rank = i + 1
+        rank_by_id[row.get('source_method') or row['method']] = rank
+        previous = score(row)
+    names = {1:'gold', 2:'silver', 3:'bronze'}
+    for row in page.locator('#leaderboard tbody tr[data-method]').all():
+        rank = rank_by_id[row.get_attribute('data-method')]
+        medal = row.locator('.rank-medal')
+        if rank in names:
+            assert medal.count() == 1
+            assert medal.get_attribute('role') == 'img'
+            assert medal.get_attribute('aria-label') == f'Rank {rank} ({names[rank]} medal)'
+            assert 'rank-medal--' + names[rank] in medal.get_attribute('class')
+        else:
+            assert medal.count() == 0
+
+
 def check_chart_tooltip(page, host):
     point = host.locator('.chart-point').first
     tip = host.locator('.chart-tooltip')
@@ -172,15 +270,7 @@ def check_chart(page, chart_id, domain, xkey, ykey, suite):
     assert 'logarithmic' in host.locator('svg desc').text_content().lower()
     axes = host.locator('.chart-axis-title').all_text_contents()
     assert len(axes) == 2 and all('log scale' in a.lower() for a in axes), axes
-    guidance = host.locator('.chart-guidance')
-    assert guidance.count() == 1
-    assert guidance.locator('.chart-guidance-arrow[aria-hidden="true"]').count() >= 1
-    guidance_text = guidance.inner_text().lower()
-    if chart_id == 'rmse-time-chart':
-        assert 'shorter time' in guidance_text and 'lower rmse' in guidance_text
-    else:
-        assert 'shorter intervals' in guidance_text and 'coverage closer to' in guidance_text
-        assert str(round(suite['nominal_coverage'] * 100)) + '%' in guidance_text
+    assert_guidance_inside_plot(host, chart_id, suite['nominal_coverage'])
     # Geometric ticks distinguish a real log axis from relabeled linear axes.
     ticks = [float(t) for t in host.locator('.chart-tick').all_text_contents()]
     for label in host.locator('.chart-tick').all_text_contents():
@@ -209,8 +299,15 @@ with sync_playwright() as p:
     assert page.locator('#rank-metric').input_value() == 'rmse'
     assert page.locator('#fam-chips button').all_inner_texts() == ['All methods', 'RFN', 'Baseline']
     assert page.locator('#tabs [data-t]').count() == 10
+    assert_navigation_groups(page)
     suites = page.evaluate('ArenaTestView.getSuites()')
     assert len(suites) == 6
+    page.wait_for_function('document.querySelector("[data-overview-stat=metrics]")?.textContent.trim() !== "—"')
+    assert_overview(page, suites)
+    bronze = page.evaluate('rankDisplay(3)')
+    assert 'rank-medal--bronze' in bronze and 'Rank 3 (bronze medal)' in bronze
+    assert page.evaluate('rankDisplay(4)') == '4'
+    assert page.evaluate('rankDisplay("—")') == '—'
     for domain, expected_values in EXPECTED.items():
         suite = next(s for s in suites if s['domain'] == domain)
         assert [[r[k] for k in KEYS] for r in suite['rows']] == expected_values, domain
@@ -245,6 +342,7 @@ with sync_playwright() as p:
             score = lambda r: abs(r[key]) if key == 'bias' else abs(r[key] - suite['nominal_coverage']) if key == 'coverage' else r[key]
             ordered = sorted(suite['rows'], key=score)
             rows = page.locator('#leaderboard tbody tr[data-method]')
+            assert_medals(page, suite, key)
             assert [r.get_attribute('data-method') for r in rows.all()] == [r.get('source_method') or r['method'] for r in ordered], (domain, key)
             for row in rows.all():
                 identity = row.get_attribute('data-method')
@@ -315,9 +413,14 @@ with sync_playwright() as p:
     page.locator('[data-fam="classical"]').click()
     assert page.locator('#leaderboard tbody tr[data-method]').count() == 1
     assert page.locator('#leaderboard .mname').inner_text() == 'Baseline'
+    assert_medals(page, next(s for s in suites if s['domain']=='iv'), 'rmse')
+    assert page.locator('#leaderboard .rank-medal').get_attribute('aria-label') == 'Rank 2 (silver medal)'
+    assert_overview(page, suites)
     page.locator('[data-fam="pfn"]').click()
     assert page.locator('#leaderboard tbody tr[data-method]').count() == 1
     assert page.locator('#leaderboard .mname').inner_text() == 'IV-PFN'
+    assert_medals(page, next(s for s in suites if s['domain']=='iv'), 'rmse')
+    assert page.locator('#leaderboard .rank-medal').get_attribute('aria-label') == 'Rank 1 (gold medal)'
     page.locator('.method-toggle').click()
     assert page.locator('.method-details-row').inner_text().find('v0.3') >= 0
     assert page.locator('.method-reference-link[href="https://huggingface.co/Brownight/tabpfn-iv-adapter-v0.3"]').count() == 1
@@ -342,6 +445,7 @@ with sync_playwright() as p:
     load(mobile, 'domain=iv')
     assert mobile.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
     mobile.locator('#menu-btn').click()
+    assert_navigation_groups(mobile)
     mobile.locator('[data-t="proximal"]').click()
     assert mobile.locator('#menu-btn').get_attribute('aria-expanded') == 'false'
     assert mobile.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
@@ -350,6 +454,7 @@ with sync_playwright() as p:
     for chart_id in ('rmse-time-chart', 'coverage-length-chart'):
         host = mobile.locator('#' + chart_id)
         assert_axis_labels_do_not_overlap(host)
+        assert_guidance_inside_plot(host, chart_id, .95)
         point, tip = host.locator('.chart-point').first, host.locator('.chart-tooltip')
         point.tap()
         assert tip.is_visible() and point.get_attribute('aria-expanded') == 'true'
