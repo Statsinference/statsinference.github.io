@@ -149,7 +149,7 @@ function methodCell(r,index){
  return `<button type="button" class="method-toggle" data-toggle-method="${index}" aria-expanded="${open}" aria-controls="method-details-${index}"><span class="mname">${esc(name)}</span><span class="method-chevron" aria-hidden="true">${open?'⌃':'⌄'}</span></button>`;
 }
 function methodDetails(r,index){
- const s=current(),ref=ArenaMethodReferences.lookup(task,r),facts=methodFacts(r,s);
+ const s=current(),ref=ArenaMethodReferences.lookup(task,r),facts=methodFacts(r,s).filter(([,value])=>s?.domain!=='iv'||!(/\bnot reported\b/i.test(String(value))));
  const references=[];
  const paper=ref?.paper,paperURL=ArenaMethodReferences.safeURL(paper?.url,'paper');
  if(paperURL)references.push(`<div><strong>Method reference</strong> <a class="method-reference-link" href="${esc(paperURL)}" target="_blank" rel="noopener noreferrer">${esc(paper.title||'Paper')} ↗</a>${paper.citation?`<p>${esc(paper.citation)}</p>`:''}</div>`);
@@ -234,7 +234,7 @@ const targetDefinitions={
 // evaluation targets.
 const outcomeSymbol=(v,a)=>`<msup><mi>${v}</mi><mrow><mo>(</mo><mn>${a}</mn><mo>)</mo></mrow></msup>`;
 const exampleTargets={
- iv:mml('<mi>LATE</mi><mo>=</mo>'+expectation(meanContrast+'<mo>∣</mo>'+outcomeSymbol('D',1)+'<mo>&gt;</mo>'+outcomeSymbol('D',0)),'Example local average treatment effect among compliers'),
+ iv:mml('<mi>LATE</mi><mo>=</mo>'+expectation(meanContrast+'<mo>∣</mo>'+outcomeSymbol('D',1)+'<mo>&gt;</mo>'+outcomeSymbol('D',0)),'Local average treatment effect among compliers'),
  nonparametric_regression:mml('<mi>m</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo>'+expectation('<mi>Y</mi><mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi>'),'Example conditional mean regression function'),
  quantile:mml('<msub><mi>Q</mi><mi>τ</mi></msub><mo>(</mo><mi>Y</mi><mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi><mo>)</mo><mo>=</mo><mi>inf</mi><mo>{</mo><mi>y</mi><mo>:</mo><mi>P</mi><mo>(</mo><mi>Y</mi><mo>≤</mo><mi>y</mi><mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi><mo>)</mo><mo>≥</mo><mi>τ</mi><mo>}</mo>','Example conditional quantile at level tau'),
  semi_supervised:mml('<mi>μ</mi><mo>=</mo>'+expectation('<mi>Y</mi>'),'Example population outcome mean in semi-supervised inference'),
@@ -242,7 +242,7 @@ const exampleTargets={
 };
 function renderDefinition(){
  const host=$('#domain-definition');if(!host)return;
- if(task==='iv')host.innerHTML='<span>Current estimand: not specified in the submitted IV results.</span><br><span>Example estimand (not the reported target)</span> '+exampleTargets.iv;
+ if(task==='iv')host.innerHTML=exampleTargets.iv;
  else if(targetDefinitions[task])host.innerHTML='<span>Current estimand</span> '+targetDefinitions[task];
  else if(exampleTargets[task]){
   const explanation=task==='semi_supervised'?' Uses labeled (X, Y) and unlabeled X data.':task==='missing_data'?' Full-data mean when some outcomes are unobserved.':'';
