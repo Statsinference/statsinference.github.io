@@ -87,6 +87,54 @@ def load(page, fragment=''):
         page.evaluate('(h)=>{location.hash=h;readHash();render();}', fragment)
 
 
+
+def assert_counterfactual_notation(page, domain):
+    """Check MathML semantics, not just visually similar flattened text."""
+    formula = page.locator('#domain-definition math')
+    assert formula.count() == 1, domain
+    nodes = formula.evaluate("""math => [...math.querySelectorAll('msup')].map(node => {
+        const text = n => n.textContent.replace(/\\s+/g, '');
+        const base = node.children[0], exp = node.children[1];
+        return {
+            base: text(base), base_tag: base.localName, exp: text(exp),
+            exp_tag: exp.localName, first: exp.firstElementChild?.textContent,
+            last: exp.lastElementChild?.textContent,
+            nested: [...exp.querySelectorAll('msup')].map(child => ({
+                base: text(child.children[0]), exp: text(child.children[1])
+            }))
+        };
+    })""")
+    potential = [n for n in nodes if n['base'] in ('Y', 'Ypost', 'M', 'D')]
+    for item in potential:
+        assert item['exp_tag'] == 'mrow', (domain, item)
+        assert item['first'] == '(' and item['last'] == ')', (domain, item)
+
+    if domain in COMING_SOON:
+        # These examples describe ordinary outcome means/functions.
+        assert not potential, (domain, potential)
+        if domain == 'nonparametric_regression':
+            assert re.sub(r'\s+', '', formula.text_content()).startswith('m(x)=')
+        return
+
+    outcomes = [n for n in potential if n['base'] in ('Y', 'Ypost')]
+    assert len(outcomes) == 2, (domain, outcomes)
+    if domain == 'mediation':
+        assert [n['exp'] for n in outcomes] == ['(1,M(1))', '(1,M(0))']
+        assert [n['nested'] for n in outcomes] == [
+            [{'base': 'M', 'exp': '(1)'}], [{'base': 'M', 'exp': '(0)'}]
+        ]
+        assert formula.get_attribute('aria-label') == 'Natural indirect effect at treatment level one'
+    else:
+        assert [n['exp'] for n in outcomes] == ['(1)', '(0)'], (domain, outcomes)
+        assert all(n['base_tag'] == ('msub' if domain == 'did_sc' else 'mi')
+                   for n in outcomes), (domain, outcomes)
+    if domain == 'iv':
+        assert [n['exp'] for n in potential if n['base'] == 'D'] == ['(1)', '(0)']
+        assert '>' in formula.text_content()
+    if domain == 'did_sc':
+        assert all(n['base'] == 'Ypost' for n in outcomes)
+        assert 'A=1' in re.sub(r'\s+', '', formula.text_content())
+
 def headers(page):
     # Compare the labels, not the sort-arrow glyph.
     return [re.sub(r'\s*[↑↓↕]\s*$', '', h).strip()
@@ -404,6 +452,11 @@ with sync_playwright() as p:
         page.wait_for_function('(domain)=>document.querySelector("#domain-illustration")?.dataset.domain===domain', arg=domain)
         assert page.locator('#domain-illustration svg').get_attribute('role') == 'img'
         assert page.locator('#domain-illustration svg desc').text_content()
+        assert_counterfactual_notation(page, domain)
+        if domain == 'proximal':
+            illustration = page.locator('#domain-illustration svg')
+            assert illustration.locator('[data-edge="W-Y"]').count() == 1
+            assert re.search(r'W\s*(?:→|to)\s*Y', illustration.locator('desc').text_content(), re.I)
         if domain in ('ate', 'cate'):
             assert 'Confounder' in page.locator('#domain-illustration').text_content()
             assert page.locator('#domain-definition').text_content().strip()
