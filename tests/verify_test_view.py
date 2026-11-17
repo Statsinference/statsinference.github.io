@@ -295,12 +295,21 @@ with sync_playwright() as p:
     pfn_row = page.locator('#leaderboard tbody tr[data-method]').filter(has_text='MediPFN')
     pfn_row.locator('.method-toggle').click()
     pfn = page.locator('#' + page.locator('#leaderboard tbody tr[data-method]').filter(has_text='MediPFN').locator('.method-toggle').get_attribute('aria-controls'))
-    pfn_links = pfn.locator('.method-reference-link')
-    assert pfn_links.count() >= 2
-    assert pfn_links.filter(has_text='Paper').count() == 1
-    assert pfn_links.filter(has_text='Hugging Face').count() == 1
-    assert pfn_links.filter(has_text='Paper').get_attribute('href').startswith('https://')
-    assert pfn_links.filter(has_text='Hugging Face').get_attribute('href') == 'https://huggingface.co/shibo769/MediPFN'
+    refs = pfn.locator('.method-reference-links > div')
+    paper = refs.filter(has_text='Method reference')
+    model = refs.filter(has_text='Hugging Face')
+    assert paper.count() == model.count() == 1
+    assert paper.locator('strong').text_content() == 'Method reference'
+    assert model.locator('strong').text_content() == 'Model'
+    paper_link, model_link = paper.locator('a.method-reference-link'), model.locator('a.method-reference-link')
+    assert paper_link.count() == model_link.count() == 1
+    assert paper_link.get_attribute('href') == 'https://arxiv.org/abs/2611.13219'
+    assert 'MediPFN' in paper_link.inner_text()
+    assert model_link.get_attribute('href') == 'https://huggingface.co/shibo769/MediPFN'
+    assert 'Hugging Face' in model_link.inner_text()
+    for link in (paper_link, model_link):
+        assert link.get_attribute('target') == '_blank'
+        assert {'noopener', 'noreferrer'} <= set(link.get_attribute('rel').split())
 
     page.locator('[data-t="iv"]').click()
     page.locator('[data-fam="classical"]').click()
