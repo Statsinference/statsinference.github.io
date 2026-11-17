@@ -242,7 +242,7 @@ with sync_playwright() as p:
     for domain in ['ate', 'cate']:
         mobile.locator('#menu-btn').click()
         mobile.locator('[data-t="' + domain + '"]').click()
-        assert mobile.locator('#hero-title').inner_text() == domain.upper()
+        assert mobile.locator('#hero-title').inner_text() == {'ate': 'Average Treatment Effect', 'cate': 'Conditional Average Treatment Effect'}[domain]
         assert mobile.evaluate('document.documentElement.scrollWidth <= innerWidth')
         assert mobile.locator('.method-config').count() == 0
         assert mobile.locator('.reference-secondary').get_attribute('href') == hf_new
@@ -252,3 +252,4 @@ with sync_playwright() as p:
     (out / 'test-view-report.json').write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))
     browser.close()
+
