@@ -236,22 +236,26 @@ def assert_navigation_groups(page):
 def assert_overview(page, suites):
     area = page.locator('#arena-overview-stats')
     assert area.is_visible()
-    # Distinct *displayed names*, not unique algorithms: all classical rows
-    # use the displayed Baseline name even if their implementations differ.
     first = {}
     for suite in suites:
         first.setdefault(suite['domain'], suite)
     def valid(row):
         return any(isinstance(row.get(k), (int, float)) and not isinstance(row.get(k), bool)
                    and math.isfinite(row[k]) for k in KEYS)
-    names = set()
-    for suite in first.values():
-        for row in suite['rows']:
-            if not valid(row):
-                continue
-            label = 'Baseline' if row['family'] == 'classical' else re.sub(r'\s+S[0-9]+$', '', row['method'], flags=re.I).strip()
-            if label:
-                names.add(re.sub(r'\s+', ' ', label).lower())
+    # Source-bound categories reflect the currently displayed releases. IV's
+    # LATE type is user-confirmed; its original machine-readable target is null.
+    by_suite = {
+        'ate-fixed-collection-report':'ATE',
+        'cate-fixed-collection-report':'CATE',
+        'mediation-fivefold-2026-11-16':'NIE',
+        'iv-v03-test':'LATE',
+        'proximal-unified-2026-11-16-normalized':'CATE',
+        'did-test-2026-11-16':'ATT',
+    }
+    active = [suite for suite in first.values() if any(valid(row) for row in suite['rows'])]
+    assert all(suite['id'] in by_suite for suite in active)
+    estimands = {by_suite[suite['id']] for suite in active}
+    assert estimands == {'ATE', 'CATE', 'NIE', 'LATE', 'ATT'}
     snapshot = json.loads((ROOT/'data/dgp-overview.json').read_text(encoding='utf-8'))
     assert snapshot['schema_version'] == 1
     assert isinstance(snapshot['registered_dgps'], int) and snapshot['registered_dgps'] >= 0
@@ -259,7 +263,7 @@ def assert_overview(page, suites):
     values = {
         'domains': page.locator('#tabs [data-t]').count(),
         'registered-dgps': snapshot['registered_dgps'],
-        'displayed-methods': len(names),
+        'estimand-types': len(estimands),
         'metrics': len(KEYS),
     }
     for key, expected in values.items():
@@ -384,7 +388,7 @@ with sync_playwright() as p:
     assert_navigation_groups(page)
     suites = page.evaluate('ArenaTestView.getSuites()')
     assert len(suites) == 6
-    page.wait_for_function('document.querySelector("[data-overview-stat=metrics]")?.textContent.trim() !== "—" && document.querySelector("[data-overview-stat=registered-dgps]")?.textContent.trim() !== "—"')
+    page.wait_for_function('document.querySelector("[data-overview-stat=estimand-types]")?.textContent.trim() !== "—" && document.querySelector("[data-overview-stat=registered-dgps]")?.textContent.trim() !== "—"')
     assert_overview(page, suites)
     bronze = page.evaluate('rankDisplay(3)')
     assert 'rank-medal--bronze' in bronze and 'Rank 3 (bronze medal)' in bronze
@@ -470,6 +474,31 @@ with sync_playwright() as p:
         extra = grid.locator('.method-detail-extra')
         assert extra.evaluate('(e)=>getComputedStyle(e).gridColumnStart') == '1'
         assert extra.evaluate('(e)=>getComputedStyle(e).gridColumnEnd') == '-1'
+
+    # Display just NIE while retaining the treatment-1 natural indirect effect.
+    page.locator('[data-t="mediation"]').click()
+    mediation_math = page.locator('#domain-definition math')
+    assert mediation_math.get_attribute('aria-label') == 'Natural indirect effect at treatment level one'
+    assert mediation_math.locator('mi').first.text_content() == 'NIE'
+    assert mediation_math.locator('msub').count() == 0
+    formula = re.sub(r'\s+', '', mediation_math.text_content())
+    assert 'Y(1,M(1))' in formula and 'Y(1,M(0))' in formula
+
+    # Five baseline evaluations explicitly report 50 bootstrap replicates.
+    # The IV source does not provide this number, so leave it unknown.
+    for domain in EXPECTED:
+        page.locator(f'[data-t="{domain}"]').click()
+        page.locator('[data-fam="classical"]').click()
+        toggle = page.locator('#leaderboard tbody .method-toggle')
+        if toggle.get_attribute('aria-expanded') == 'false':
+            toggle.click()
+        detail = page.locator('#' + page.locator('#leaderboard tbody .method-toggle').get_attribute('aria-controls'))
+        bootstrap = detail.locator('.method-detail-grid > div').filter(has=page.get_by_text('Bootstrap', exact=True))
+        assert bootstrap.count() == 1
+        value = bootstrap.locator('p').inner_text().strip()
+        assert value == ('—' if domain == 'iv' else '50'), (domain, value)
+        page.locator('#leaderboard tbody .method-toggle').click()
+        page.locator('[data-fam="all"]').click()
 
     page.locator('[data-t="mediation"]').click()
     pfn_row = page.locator('#leaderboard tbody tr[data-method]').filter(has_text='MediPFN')
