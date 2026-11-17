@@ -468,6 +468,37 @@ with sync_playwright() as p:
     assert mobile.locator('.method-details-row').count() == 1
     assert mobile.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
     mobile.screenshot(path=str(OUT / 'mobile.png'), full_page=True)
+
+    # A 320px viewport was a known collision case: check every plotted method
+    # on both charts in all six populated domains, using actual screen bounds.
+    narrow = browser.new_page(viewport={'width': 320, 'height': 844})
+    narrow.on('pageerror', lambda e: errors.append(str(e)))
+    load(narrow)
+    for domain in EXPECTED:
+        if domain != 'ate':
+            narrow.locator('#menu-btn').click()
+            narrow.locator(f'[data-t="{domain}"]').click()
+        for chart_id in ('rmse-time-chart', 'coverage-length-chart'):
+            host = narrow.locator('#' + chart_id)
+            narrow.wait_for_function('(a)=>{const h=document.getElementById(a.id);return h?.dataset.domain===a.domain && h.querySelector("svg .chart-guidance")}', arg={'id':chart_id,'domain':domain})
+            assert_guidance_inside_plot(host, chart_id, .95)
+            points = host.locator('.chart-point')
+            for index in range(points.count()):
+                point = points.nth(index)
+                point.hover()
+                tip = host.locator('.chart-tooltip')
+                assert tip.is_visible(), (domain, chart_id, index)
+                tooltip, guide, area = tip.bounding_box(), host.locator('svg .chart-guidance').bounding_box(), host.bounding_box()
+                assert tooltip and guide and area
+                assert tooltip['x'] >= area['x'] - 1 and tooltip['y'] >= area['y'] - 1
+                assert tooltip['x'] + tooltip['width'] <= area['x'] + area['width'] + 1
+                assert tooltip['y'] + tooltip['height'] <= area['y'] + area['height'] + 1
+                ox = min(tooltip['x']+tooltip['width'],guide['x']+guide['width']) - max(tooltip['x'],guide['x'])
+                oy = min(tooltip['y']+tooltip['height'],guide['y']+guide['height']) - max(tooltip['y'],guide['y'])
+                assert not (ox > 1 and oy > 1), (domain, chart_id, index, tooltip, guide)
+                narrow.mouse.move(0, 0)
+                assert tip.is_hidden()
+
     assert not errors, errors
     assert page.evaluate('ArenaTestView.getSuites()') == suites
     assert SOURCE_HASHES == data_hashes()
