@@ -15,7 +15,7 @@
     cate:'Confounder X affects treatment A and outcome Y. The treatment also affects the outcome.',
     mediation:'Treatment A affects outcome Y both directly and through mediator M. Baseline confounder X points to A, M and Y.',
     iv:'Instrument Z affects treatment A, which affects outcome Y. Unobserved U affects both A and Y.',
-    proximal:'Unobserved U points to proxies Z and W, treatment A and outcome Y. Z points to A, W points to Y, and A points to Y.',
+    proximal:'Unobserved U points to proxies Z and W, treatment A and outcome Y. The arrows also go from Z to A, W to Y, and A to Y.',
     did_sc:'Treated and control trends before and after treatment. The post-treatment effect is the gap between the treated outcome and its parallel-trend counterfactual.',
     nonparametric_regression:'Observations around a smooth regression curve, with the fitted value marked at a query point.',
     quantile:'A cumulative distribution curve with a probability level and its corresponding quantile.',
