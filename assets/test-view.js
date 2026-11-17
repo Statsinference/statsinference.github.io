@@ -185,6 +185,13 @@ function rankMap(){
  });
  return ranks;
 }
+// Medals decorate the existing numeric rank under the selected metric.
+// Ties, filters, missing values, and CSV rankings retain their existing semantics.
+function rankDisplay(rank){
+ if(!Number.isInteger(rank)||rank<1||rank>3)return esc(rank);
+ const names=['gold','silver','bronze'],name=names[rank-1];
+ return `<span class="rank-medal rank-medal--${name}" role="img" aria-label="Rank ${rank} (${name} medal)"><svg viewBox="0 0 24 29" width="24" height="29" aria-hidden="true" focusable="false"><path class="rank-medal-ribbon" d="M4 1h6l2 6 2-6h6l-4.2 10.1H8.2z"/><circle class="rank-medal-disc" cx="12" cy="17.5" r="8.4"/><circle class="rank-medal-ring" cx="12" cy="17.5" r="6.5"/><text x="12" y="21" text-anchor="middle">${rank}</text></svg></span>`;
+}
 function setRanking(key,toggle=false){
  if(!metricKeys.includes(key))return;
  sortDirection=toggle&&rankMetric===key?-sortDirection:1;
@@ -199,7 +206,7 @@ function renderMetrics(){
   const label=m.key==='time_s'?'Time (s)':m.label;
   return `<th scope="col" data-metric="${m.key}" class="r${active?' ranked-column':''}" aria-sort="${order}"><button type="button" data-sort="${m.key}" title="${esc(m.detail)}">${esc(label)} <span class="sort-arrow" aria-hidden="true">${active?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`;
  }).join('');
- const body=rs.length?rs.map((r,index)=>`<tr data-method="${esc(r.source_method||r.method)}"><td class="rank-cell num">${ranks.get(r)}</td><th scope="row" class="method-cell">${methodCell(r,index)}</th>${METRICS.map(m=>`<td data-metric="${m.key}" class="r num${m.key===rankMetric?' ranked-column':''}" title="${esc(r.status==='not_reported'?'Not reported':r.approximate_metrics?.includes(m.key)?'Approximate value':'Reported value')}">${formatMetric(r,m.key)}</td>`).join('')}</tr>${expandedMethods.has(methodKey(r))?methodDetails(r,index):''}`).join(''):`<tr><td colspan="8" class="empty-cell">${s&&!loadError?'No methods match the filters.':empty}</td></tr>`;
+ const body=rs.length?rs.map((r,index)=>`<tr data-method="${esc(r.source_method||r.method)}"><td class="rank-cell num">${rankDisplay(ranks.get(r))}</td><th scope="row" class="method-cell">${methodCell(r,index)}</th>${METRICS.map(m=>`<td data-metric="${m.key}" class="r num${m.key===rankMetric?' ranked-column':''}" title="${esc(r.status==='not_reported'?'Not reported':r.approximate_metrics?.includes(m.key)?'Approximate value':'Reported value')}">${formatMetric(r,m.key)}</td>`).join('')}</tr>${expandedMethods.has(methodKey(r))?methodDetails(r,index):''}`).join(''):`<tr><td colspan="8" class="empty-cell">${s&&!loadError?'No methods match the filters.':empty}</td></tr>`;
  $('#leaderboard-wrap').innerHTML=`<table id="leaderboard"><caption class="sr-only">${esc(DOMAINS.find(d=>d.id===task).name)} — Test results</caption><thead><tr><th scope="col" class="rank-cell">Rank</th><th scope="col" class="method-cell">Method</th>${headers}</tr></thead><tbody>${body}</tbody></table>`;
  $('#rank-metric').value=rankMetric;
  $('#rank-metric').title=METRICS.find(m=>m.key===rankMetric).detail;
@@ -262,7 +269,8 @@ function render(){
 function readHash(){const p=new URLSearchParams(location.hash.slice(1));if(DOMAINS.some(d=>d.id===p.get('domain')))task=p.get('domain');}
 function writeHash(){const p=new URLSearchParams({domain:task});try{history.replaceState(null,'','#'+p);}catch(_){}}
 function chooseTask(id){if(!DOMAINS.some(d=>d.id===id))return;task=id;family='all';query='';$('#q').value='';writeHash();render();}
-$('#tabs').innerHTML=DOMAINS.map(d=>`<button class="tab" id="tab-${d.id}" data-t="${d.id}" role="tab" aria-controls="main-panel" aria-selected="false" tabindex="-1">${esc(d.name)}</button>`).join('');
+const domainGroups=[{id:'causal',label:'Causal Inference',domains:DOMAINS.slice(0,6)},{id:'other',label:'Others',domains:DOMAINS.slice(6)}];
+$('#tabs').innerHTML=domainGroups.map(g=>`<div class="domain-group" role="group" aria-labelledby="domain-group-${g.id}"><div id="domain-group-${g.id}" class="domain-group-heading">${esc(g.label)}</div>${g.domains.map(d=>`<button class="tab" id="tab-${d.id}" data-t="${d.id}" role="tab" aria-controls="main-panel" aria-selected="false" tabindex="-1">${esc(d.name)}</button>`).join('')}</div>`).join('');
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(b)chooseTask(b.dataset.t);});
 $('#fam-chips').addEventListener('click',e=>{const b=e.target.closest('[data-fam]');if(b){family=b.dataset.fam;render();}});
 $('#q').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();renderMetrics();});

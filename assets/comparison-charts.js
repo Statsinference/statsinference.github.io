@@ -41,10 +41,54 @@
     point.setAttribute('aria-expanded', 'true');
     // Keep the card inside the chart at both narrow and wide screen widths.
     const available = host.clientWidth;
-    const left = Math.max(4, Math.min(cx - tooltip.offsetWidth/2, available - tooltip.offsetWidth - 4));
-    const top = cy - tooltip.offsetHeight - 12 >= 0 ? cy - tooltip.offsetHeight - 12 : cy + 12;
+    const maxLeft = Math.max(4, available - tooltip.offsetWidth - 4);
+    const idealLeft = Math.max(4, Math.min(cx - tooltip.offsetWidth/2, maxLeft));
+    const above = cy - tooltip.offsetHeight - 12;
+    const below = cy + 12;
+    const maxTop = Math.max(4, (host.clientHeight || 310) - tooltip.offsetHeight - 4);
+    const clampY = v => Math.max(4, Math.min(v, maxTop));
+    const positions = [idealLeft, 4, maxLeft].flatMap(left => [above, below, maxTop].map(top => ({left, top:clampY(top)})));
+    const bounds = host._guidanceBounds;
+    const intersects = p => bounds && p.left < bounds.right + 4 && p.left + tooltip.offsetWidth > bounds.left - 4 && p.top < bounds.bottom + 4 && p.top + tooltip.offsetHeight > bounds.top - 4;
+    const chosen = positions.find(p => !intersects(p)) || positions[0];
+    const {left, top} = chosen;
     tooltip.style.left = `${left}px`;
     tooltip.style.top = `${top}px`;
+  }
+  // Pick an in-plot area away from every marker and the nominal-coverage line.
+  function drawGuidance(svg, host, box, plotW, plotH, positions, nominalY, nominal, width) {
+    const w = Math.min(148, Math.max(96, plotW - 12));
+    const h = 42;
+    const candidates = [];
+    for (let iy = 0; iy <= 10; iy++) {
+      for (let ix = 10; ix >= 0; ix--) {
+        const x = box.left + 4 + Math.max(0, plotW - w - 8) * ix / 10;
+        const y = box.top + 4 + Math.max(0, plotH - h - 8) * iy / 10;
+        const collidesPoint = positions.some(p => p.x >= x - 10 && p.x <= x + w + 10 && p.y >= y - 10 && p.y <= y + h + 10);
+        const collidesTarget = nominalY != null && nominalY >= y - 4 && nominalY <= y + h + 4;
+        const distance = Math.min(...positions.map(p => Math.hypot(p.x - (x + w/2), p.y - (y + h/2))));
+        candidates.push({x,y,collidesPoint,collidesTarget,distance});
+      }
+    }
+    const valid = candidates.filter(p => !p.collidesPoint && !p.collidesTarget);
+    // On unusually dense plots retain the reference line and minimize marker
+    // overlap; data markers are rendered after this soft background.
+    const pool = valid.length ? valid : candidates.filter(p => !p.collidesTarget);
+    const place = (pool.length ? pool : candidates).sort((a,b) => Number(a.collidesPoint)-Number(b.collidesPoint) || b.distance-a.distance)[0];
+    const group = svgElement('g', {class:'chart-guidance', 'data-x':place.x, 'data-y':place.y, 'data-width':w, 'data-height':h, 'aria-hidden':'true'});
+    group.append(svgElement('rect', {x:place.x,y:place.y,width:w,height:h,rx:6,class:'chart-guidance-background'}));
+    // One horizontal and one vertical arrow make the two directions explicit.
+    const ax = place.x + 8, ay = place.y + 12;
+    group.append(svgElement('path', {d:`M ${ax+12} ${ay} H ${ax} M ${ax+4} ${ay-4} L ${ax} ${ay} L ${ax+4} ${ay+4}`,class:'chart-guidance-arrow'}));
+    group.append(svgElement('text', {x:place.x+25,y:place.y+15,class:'chart-guidance-text'}, nominalY == null ? 'Shorter time' : 'Shorter interval'));
+    const bx = place.x + 14, by = place.y + 30;
+    const up = nominalY != null && place.y > nominalY;
+    const dy = up ? -1 : 1;
+    group.append(svgElement('path', {d:`M ${bx} ${by-5*dy} V ${by+5*dy} M ${bx-4} ${by+1*dy} L ${bx} ${by+5*dy} L ${bx+4} ${by+1*dy}`,class:'chart-guidance-arrow'}));
+    group.append(svgElement('text', {x:place.x+25,y:place.y+34,class:'chart-guidance-text'}, nominalY == null ? 'Lower RMSE' : `Toward ${formatNumber(nominal)}%`));
+    svg.append(group);
+    const scale = host.clientWidth / width;
+    host._guidanceBounds = {left:place.x*scale,top:place.y*scale,right:(place.x+w)*scale,bottom:(place.y+h)*scale};
   }
   document.addEventListener('pointerdown', event => {
     if (activeTip && !activeTip.point.contains(event.target)) closeTip();
@@ -83,6 +127,7 @@
     const nonpositive = candidates.filter(row => usable(row) && (row[config.x] <= 0 || row[config.y] <= 0)).length;
     const unavailable = candidates.length - rows.length - nonpositive;
     if (activeTip?.host === host) closeTip();
+    host._guidanceBounds = null;
     host.replaceChildren();
     host.dataset.domain = suite?.domain || task;
     if (!rows.length) {
@@ -112,9 +157,10 @@
     const plotH = height - box.top - box.bottom;
     const x = value => box.left + (Math.log10(value) - xAxis.min) / (xAxis.max-xAxis.min) * plotW;
     const y = value => box.top + (1 - (Math.log10(value) - yAxis.min) / (yAxis.max-yAxis.min)) * plotH;
-    const svg = svgElement('svg', {viewBox:`0 0 ${width} ${height}`, role:'group', 'aria-labelledby':config.id+'-title', 'aria-describedby':config.id+'-desc', 'data-domain':suite.domain});
+    const svg = svgElement('svg', {viewBox:`0 0 ${width} ${height}`, role:'group', 'aria-labelledby':config.id+'-title', 'aria-describedby':config.id+'-desc', 'data-domain':suite.domain, 'data-plot-left':box.left, 'data-plot-top':box.top, 'data-plot-width':plotW, 'data-plot-height':plotH});
     svg.append(svgElement('title', {id:config.id+'-title'}, config.title));
-    svg.append(svgElement('desc', {id:config.id+'-desc'}, `${document.getElementById('hero-title').textContent}. Results for ${rows.map(methodName).join(' and ')}. Both axes use a logarithmic scale.`));
+    const guidanceDescription = config.y === 'coverage' ? `Shorter intervals are preferred, and coverage should be closer to ${formatNumber(nominal)} percent.` : 'Shorter time and lower RMSE are preferred.';
+    svg.append(svgElement('desc', {id:config.id+'-desc'}, `${document.getElementById('hero-title').textContent}. Results for ${rows.map(methodName).join(' and ')}. Both axes use a logarithmic scale. ${guidanceDescription}`));
     for (const value of yAxis.ticks) {
       svg.append(svgElement('line',{x1:box.left,y1:y(value),x2:width-box.right,y2:y(value),class:'chart-grid'}));
       svg.append(svgElement('text',{x:box.left-10,y:y(value)+3.5,'text-anchor':'end',class:'chart-tick'},tick(value)));
@@ -132,6 +178,9 @@
         svg.append(svgElement('text',{x:width-box.right,y:y(nominal)-6,'text-anchor':'end',class:'chart-reference-label'},tick(nominal)+'%'));
       }
     }
+    drawGuidance(svg, host, box, plotW, plotH,
+      rows.map(row => ({x:x(row[config.x]), y:y(yValue(row))})),
+      nominal == null ? null : y(nominal), nominal, width);
     const legend = document.createElement('div');
     legend.className = 'chart-legend';
     const tooltip = document.createElement('div');
@@ -180,25 +229,7 @@
       const marker = document.createElement('i');marker.className='chart-legend-marker '+familyClass(row);marker.setAttribute('aria-hidden','true');
       item.append(marker,document.createTextNode(methodName(row)));legend.append(item);
     }
-    const guidance = document.createElement('div');
-    guidance.className = 'chart-guidance';
-    const guidanceArrow = document.createElement('span');
-    guidanceArrow.className = 'chart-guidance-arrow';
-    guidanceArrow.setAttribute('aria-hidden', 'true');
-    guidanceArrow.textContent = config.y === 'coverage' ? '←' : '↙';
-    const guidanceText = document.createElement('span');
-    guidanceText.textContent = config.y === 'coverage' ? 'Shorter intervals' : 'Shorter time · lower RMSE';
-    guidance.append(guidanceArrow, guidanceText);
-    if (config.y === 'coverage') {
-      const targetArrow = document.createElement('span');
-      targetArrow.className = 'chart-guidance-arrow';
-      targetArrow.setAttribute('aria-hidden', 'true');
-      targetArrow.textContent = '↕';
-      const targetText = document.createElement('span');
-      targetText.textContent = `Coverage closer to ${formatNumber(nominal)}%`;
-      guidance.append(targetArrow, targetText);
-    }
-    host.append(svg,guidance,legend,tooltip);
+    host.append(svg,legend,tooltip);
     if (nonpositive || unavailable) {
       const note = document.createElement('p');
       note.className = 'chart-note';
