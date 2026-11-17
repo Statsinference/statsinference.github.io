@@ -54,7 +54,7 @@ const points = plot.children.filter(x=>x.attrs.class?.startsWith('chart-point'))
 assert.equal(points.length,3);
 const coordinates = points.map(p=>p.attrs.transform.match(/translate\(([-.\d]+) ([-.\d]+)\)/).slice(1).map(Number));
 for (const chart of [plot, hosts['coverage-length-chart'].children[0]]) {
-  const guide = chart.children.find(x=>x.attrs.class==='chart-guidance');
+  const guide = chart.children.find(x=>(x.attrs.class||'').split(/\s+/).includes('chart-guidance'));
   assert(guide, 'in-plot guidance must be rendered in the SVG');
   assert.equal(guide.children.filter(x=>x.attrs.class==='chart-guidance-arrow').length, 2);
   const [left,top,width,height] = ['data-plot-left','data-plot-top','data-plot-width','data-plot-height'].map(k=>Number(chart.attrs[k]));
