@@ -54,17 +54,32 @@ const points = plot.children.filter(x=>x.attrs.class?.startsWith('chart-point'))
 assert.equal(points.length,3);
 const coordinates = points.map(p=>p.attrs.transform.match(/translate\(([-.\d]+) ([-.\d]+)\)/).slice(1).map(Number));
 for (const chart of [plot, hosts['coverage-length-chart'].children[0]]) {
-  const guide = chart.children.find(x=>(x.attrs.class||'').split(/\s+/).includes('chart-guidance'));
-  assert(guide, 'in-plot guidance must be rendered in the SVG');
-  assert.equal(guide.children.filter(x=>x.attrs.class==='chart-guidance-arrow').length, 2);
+  const guides = chart.children.filter(x=>(x.attrs.class||'').split(/\s+/).includes('chart-guidance'));
+  assert.equal(guides.length, 2, 'must render separate axis guidance');
+  const xguide = guides.find(g=>g.attrs['data-axis']==='x');
+  const yguide = guides.find(g=>g.attrs['data-axis']==='y');
+  assert(xguide && yguide);
+  assert.equal(xguide.attrs['data-direction'], 'left');
   const [left,top,width,height] = ['data-plot-left','data-plot-top','data-plot-width','data-plot-height'].map(k=>Number(chart.attrs[k]));
-  const [x,y,w,h] = ['data-x','data-y','data-width','data-height'].map(k=>Number(guide.attrs[k]));
-  assert(x>=left && y>=top && x+w<=left+width && y+h<=top+height);
-  for (const point of chart.children.filter(x=>x.attrs.class?.startsWith('chart-point'))) {
-    const [cx,cy]=point.attrs.transform.match(/translate\(([-.\d]+) ([-.\d]+)\)/).slice(1).map(Number);
-    const gapX=Math.max(x-cx,0,cx-(x+w)),gapY=Math.max(y-cy,0,cy-(y+h));
-    assert(Math.hypot(gapX,gapY)>=5.5,'guide must not cover data markers');
+  for (const guide of guides) {
+    assert.equal(guide.children.filter(x=>x.attrs.class==='chart-guidance-arrow').length, 1);
+    const [x,y,w,h] = ['data-x','data-y','data-width','data-height'].map(k=>Number(guide.attrs[k]));
+    assert(x>=left && y>=top && x+w<=left+width && y+h<=top+height);
+    for (const point of chart.children.filter(x=>x.attrs.class?.startsWith('chart-point'))) {
+      const [cx,cy]=point.attrs.transform.match(/translate\(([-.\d]+) ([-.\d]+)\)/).slice(1).map(Number);
+      const gapX=Math.max(x-cx,0,cx-(x+w)),gapY=Math.max(y-cy,0,cy-(y+h));
+      assert(Math.hypot(gapX,gapY)>=5.5,'guide must not cover data markers');
+    }
   }
+  const a=xguide.attrs,b=yguide.attrs;
+  const target = chart.children.find(e=>e.attrs.class==='chart-reference');
+  assert.equal(yguide.attrs['data-direction'], target && Number(b['data-y'])>Number(target.attrs.y1) ? 'up' : 'down');
+  assert(Number(a['data-y'])+Number(a['data-height']) >= top+height-81, 'x guide must stay close to x axis');
+  assert(Number(b['data-x']) <= left+53, 'y guide must stay close to y axis');
+  assert(!(Number(a['data-x']) < Number(b['data-x'])+Number(b['data-width']) &&
+           Number(a['data-x'])+Number(a['data-width']) > Number(b['data-x']) &&
+           Number(a['data-y']) < Number(b['data-y'])+Number(b['data-height']) &&
+           Number(a['data-y'])+Number(a['data-height']) > Number(b['data-y'])), 'guides must not overlap');
 }
 for (const axis of [0,1]) {
   const [a,b,c] = coordinates.map(p=>p[axis]);

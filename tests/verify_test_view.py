@@ -52,7 +52,7 @@ if not LOCAL:
              'assets/comparison-charts.css', 'assets/domain-illustrations.js',
              'assets/arena-overview.js', 'assets/arena-overview.css',
              'data/results.json', 'data/mediation-fivefold.json',
-             'data/iv-v03.json', 'data/unified-test-2026-11-16.json']
+             'data/iv-v03.json', 'data/unified-test-2026-11-16.json', 'data/dgp-overview.json']
     for attempt in range(40):
         try:
             if all(urllib.request.urlopen(BASE + path + '?verify=' + SHA + '-' + str(attempt), timeout=15).read()
@@ -118,20 +118,29 @@ def assert_axis_labels_do_not_overlap(host):
 
 
 def assert_guidance_inside_plot(host, chart_id, nominal):
-    """Check rendered geometry, not just the guide text."""
+    """Guides must track their axes without hiding data or each other."""
     svg = host.locator('svg')
-    guide = svg.locator('.chart-guidance')
-    assert guide.count() == 1
-    arrows = guide.locator('path.chart-guidance-arrow')
-    assert arrows.count() == 2
-    for arrow in arrows.all():
-        bounds = arrow.bounding_box()
-        assert arrow.is_visible() and bounds and bounds['width'] > 1 and bounds['height'] > 1
-    text = guide.text_content().lower()
+    groups = svg.locator('.chart-guidance')
+    assert groups.count() == 2
+    xguide = svg.locator('.chart-guidance[data-axis="x"]')
+    yguide = svg.locator('.chart-guidance[data-axis="y"]')
+    assert xguide.count() == yguide.count() == 1
+    assert xguide.get_attribute('data-direction') == 'left'
     if chart_id == 'rmse-time-chart':
-        assert 'shorter time' in text and 'lower rmse' in text
+        assert 'shorter time' in xguide.text_content().lower()
+        assert 'lower rmse' in yguide.text_content().lower()
+        assert yguide.get_attribute('data-direction') == 'down'
     else:
-        assert 'shorter interval' in text and str(round(nominal * 100)) + '%' in text
+        assert 'shorter ci' in xguide.text_content().lower()
+        assert str(round(nominal * 100)) + '%' in yguide.text_content()
+        line_y = float(svg.locator('.chart-reference').get_attribute('y1'))
+        guide_y = float(yguide.get_attribute('data-y'))
+        assert yguide.get_attribute('data-direction') == ('up' if guide_y > line_y else 'down')
+    for group in (xguide, yguide):
+        arrow = group.locator('path.chart-guidance-arrow')
+        assert arrow.count() == 1
+        b = arrow.bounding_box()
+        assert arrow.is_visible() and b and b['width'] > 1 and b['height'] > 1
     plot = svg.evaluate('''svg => {
         const vals=['data-plot-left','data-plot-top','data-plot-width','data-plot-height'].map(a=>Number(svg.getAttribute(a)));
         if (vals.some(v=>!Number.isFinite(v))) return null;
@@ -141,21 +150,37 @@ def assert_guidance_inside_plot(host, chart_id, nominal):
         return {left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),
                 top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)};
     }''')
-    box = guide.bounding_box()
-    assert plot and box, (chart_id, plot, box)
-    assert box['x'] >= plot['left'] - 1 and box['y'] >= plot['top'] - 1, (chart_id, plot, box)
-    assert box['x'] + box['width'] <= plot['right'] + 1, (chart_id, plot, box)
-    assert box['y'] + box['height'] <= plot['bottom'] + 1, (chart_id, plot, box)
-    for marker in svg.locator('.chart-point .chart-marker').all():
-        dot = marker.bounding_box()
-        assert dot
-        overlap_x = min(box['x']+box['width'], dot['x']+dot['width'])-max(box['x'],dot['x'])
-        overlap_y = min(box['y']+box['height'], dot['y']+dot['height'])-max(box['y'],dot['y'])
-        assert not (overlap_x > 0 and overlap_y > 0), (chart_id, box, dot)
-    if chart_id == 'coverage-length-chart':
-        line = svg.locator('.chart-reference').bounding_box()
-        assert line
-        assert not (box['y'] < line['y'] < box['y'] + box['height']), (chart_id, box, line)
+    assert plot
+    # These bounds use SVG user coordinates and verify the guides are near
+    # their corresponding axes, not just anywhere inside the plot.
+    left = float(svg.get_attribute('data-plot-left'))
+    top = float(svg.get_attribute('data-plot-top'))
+    height = float(svg.get_attribute('data-plot-height'))
+    xedge = float(xguide.get_attribute('data-y')) + float(xguide.get_attribute('data-height'))
+    yedge = float(yguide.get_attribute('data-x'))
+    assert 0 <= top+height-xedge <= 81
+    assert 0 <= yedge-left <= 53
+    boxes = []
+    for group in (xguide, yguide):
+        box = group.bounding_box()
+        assert box, chart_id
+        boxes.append(box)
+        assert box['x'] >= plot['left'] - 1 and box['y'] >= plot['top'] - 1
+        assert box['x'] + box['width'] <= plot['right'] + 1
+        assert box['y'] + box['height'] <= plot['bottom'] + 1
+        for marker in svg.locator('.chart-point .chart-marker').all():
+            dot = marker.bounding_box()
+            assert dot
+            ox = min(box['x']+box['width'],dot['x']+dot['width'])-max(box['x'],dot['x'])
+            oy = min(box['y']+box['height'],dot['y']+dot['height'])-max(box['y'],dot['y'])
+            assert not (ox > 0 and oy > 0), (chart_id, box, dot)
+        if chart_id == 'coverage-length-chart':
+            line = svg.locator('.chart-reference').bounding_box()
+            assert line and not (box['y'] < line['y'] < box['y'] + box['height'])
+    a, b = boxes
+    ox = min(a['x']+a['width'], b['x']+b['width']) - max(a['x'],b['x'])
+    oy = min(a['y']+a['height'], b['y']+b['height']) - max(a['y'],b['y'])
+    assert not (ox > 0 and oy > 0), (chart_id, a, b)
 
 
 def assert_navigation_groups(page):
@@ -173,20 +198,36 @@ def assert_navigation_groups(page):
 def assert_overview(page, suites):
     area = page.locator('#arena-overview-stats')
     assert area.is_visible()
-    # Reflect only the first active suite per domain, same as the leaderboard.
+    # Distinct *displayed names*, not unique algorithms: all classical rows
+    # use the displayed Baseline name even if their implementations differ.
     first = {}
-    for s in suites:
-        first.setdefault(s['domain'], s)
-    valid = lambda row: any(isinstance(row.get(k), (int,float)) and
-                            not isinstance(row.get(k), bool) and math.isfinite(row[k]) for k in KEYS)
+    for suite in suites:
+        first.setdefault(suite['domain'], suite)
+    def valid(row):
+        return any(isinstance(row.get(k), (int, float)) and not isinstance(row.get(k), bool)
+                   and math.isfinite(row[k]) for k in KEYS)
+    names = set()
+    for suite in first.values():
+        for row in suite['rows']:
+            if not valid(row):
+                continue
+            label = 'Baseline' if row['family'] == 'classical' else re.sub(r'\s+S[0-9]+$', '', row['method'], flags=re.I).strip()
+            if label:
+                names.add(re.sub(r'\s+', ' ', label).lower())
+    snapshot = json.loads((ROOT/'data/dgp-overview.json').read_text(encoding='utf-8'))
+    assert snapshot['schema_version'] == 1
+    assert isinstance(snapshot['registered_dgps'], int) and snapshot['registered_dgps'] >= 0
+    assert re.fullmatch(r'\d{4}-\d{2}-\d{2}', snapshot['as_of'])
     values = {
         'domains': page.locator('#tabs [data-t]').count(),
-        'active-domains': sum(any(valid(r) for r in s['rows']) for s in first.values()),
-        'method-entries': sum(sum(valid(r) for r in s['rows']) for s in first.values()),
+        'registered-dgps': snapshot['registered_dgps'],
+        'displayed-methods': len(names),
         'metrics': len(KEYS),
     }
     for key, expected in values.items():
         assert area.locator(f'[data-overview-stat="{key}"]').inner_text().strip() == str(expected), key
+    provenance = area.locator('[data-dgp-snapshot]').text_content().lower()
+    assert snapshot['as_of'] in provenance and 'pending review' in provenance
 
 
 def assert_medals(page, suite, key):
@@ -226,6 +267,9 @@ def check_chart_tooltip(page, host):
     assert tip.locator('.chart-tooltip-title').inner_text() == point.get_attribute('data-method')
     assert tip.locator('.chart-tooltip-row').count() == 2
     assert_at_most_four_decimals(tip.inner_text())
+    assert 'original units' not in tip.inner_text().lower()
+    if host.get_attribute('data-domain') == 'proximal':
+        assert 'normalized by outcome sd' in tip.inner_text().lower()
     rows = tip.locator('.chart-tooltip-row').all_inner_texts()
     for text, key in zip(rows, ('data-x', 'data-y')):
         match = re.search(r'[-+]?(?:\d+\.\d+|\d+)(?:[eE][-+]?\d+)?', text)
@@ -302,7 +346,7 @@ with sync_playwright() as p:
     assert_navigation_groups(page)
     suites = page.evaluate('ArenaTestView.getSuites()')
     assert len(suites) == 6
-    page.wait_for_function('document.querySelector("[data-overview-stat=metrics]")?.textContent.trim() !== "—"')
+    page.wait_for_function('document.querySelector("[data-overview-stat=metrics]")?.textContent.trim() !== "—" && document.querySelector("[data-overview-stat=registered-dgps]")?.textContent.trim() !== "—"')
     assert_overview(page, suites)
     bronze = page.evaluate('rankDisplay(3)')
     assert 'rank-medal--bronze' in bronze and 'Rank 3 (bronze medal)' in bronze
@@ -409,10 +453,25 @@ with sync_playwright() as p:
         assert link.get_attribute('target') == '_blank'
         assert {'noopener', 'noreferrer'} <= set(link.get_attribute('rel').split())
 
+    page.locator('[data-t="proximal"]').click()
+    assert page.evaluate('current().metric_scale') == 'normalized'
+    assert 'original units' not in page.locator('#main-panel').inner_text().lower()
+    page.evaluate("location.hash='domain=proximal&suite=proximal-unified-2026-11-16-original';readHash();render();")
+    assert page.evaluate('current().metric_scale') == 'normalized'
+    assert 'original units' not in page.locator('#main-panel').inner_text().lower()
+
     page.locator('[data-t="iv"]').click()
+    iv_target = page.locator('#domain-definition math')
+    assert iv_target.get_attribute('aria-label') == 'Local average treatment effect among compliers'
+    assert 'late' in iv_target.text_content().lower()
+    assert 'not specified' not in page.locator('#domain-definition').inner_text().lower()
     page.locator('[data-fam="classical"]').click()
     assert page.locator('#leaderboard tbody tr[data-method]').count() == 1
     assert page.locator('#leaderboard .mname').inner_text() == 'Baseline'
+    page.locator('.method-toggle').click()
+    baseline_detail = page.locator('.method-details-row')
+    assert baseline_detail.is_visible() and 'not reported' not in baseline_detail.inner_text().lower()
+    page.locator('.method-toggle').click()
     assert_medals(page, next(s for s in suites if s['domain']=='iv'), 'rmse')
     assert page.locator('#leaderboard .rank-medal').get_attribute('aria-label') == 'Rank 2 (silver medal)'
     assert_overview(page, suites)
@@ -423,6 +482,7 @@ with sync_playwright() as p:
     assert page.locator('#leaderboard .rank-medal').get_attribute('aria-label') == 'Rank 1 (gold medal)'
     page.locator('.method-toggle').click()
     assert page.locator('.method-details-row').inner_text().find('v0.3') >= 0
+    assert 'not reported' not in page.locator('.method-details-row').inner_text().lower()
     assert page.locator('.method-reference-link[href="https://huggingface.co/Brownight/tabpfn-iv-adapter-v0.3"]').count() == 1
     page.locator('[data-fam="all"]').click()
     page.locator('#q').fill('no-such-method')
@@ -488,14 +548,17 @@ with sync_playwright() as p:
                 point.hover()
                 tip = host.locator('.chart-tooltip')
                 assert tip.is_visible(), (domain, chart_id, index)
-                tooltip, guide, area = tip.bounding_box(), host.locator('svg .chart-guidance').bounding_box(), host.bounding_box()
-                assert tooltip and guide and area
+                tooltip, area = tip.bounding_box(), host.bounding_box()
+                assert tooltip and area
                 assert tooltip['x'] >= area['x'] - 1 and tooltip['y'] >= area['y'] - 1
                 assert tooltip['x'] + tooltip['width'] <= area['x'] + area['width'] + 1
                 assert tooltip['y'] + tooltip['height'] <= area['y'] + area['height'] + 1
-                ox = min(tooltip['x']+tooltip['width'],guide['x']+guide['width']) - max(tooltip['x'],guide['x'])
-                oy = min(tooltip['y']+tooltip['height'],guide['y']+guide['height']) - max(tooltip['y'],guide['y'])
-                assert not (ox > 1 and oy > 1), (domain, chart_id, index, tooltip, guide)
+                for element in host.locator('svg .chart-guidance').all():
+                    guide = element.bounding_box()
+                    assert guide
+                    ox = min(tooltip['x']+tooltip['width'],guide['x']+guide['width']) - max(tooltip['x'],guide['x'])
+                    oy = min(tooltip['y']+tooltip['height'],guide['y']+guide['height']) - max(tooltip['y'],guide['y'])
+                    assert not (ox > 1 and oy > 1), (domain, chart_id, index, tooltip, guide)
                 narrow.mouse.move(0, 0)
                 assert tip.is_hidden()
 
