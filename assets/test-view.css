@@ -37,8 +37,7 @@
 .coming-soon p{margin-top:7px;color:var(--muted);font-size:12px}
 #leaderboard .method-toggle{display:inline-flex;align-items:center;gap:8px;text-align:left;padding:3px 0;color:var(--fg);line-height:1.45}
 #leaderboard .method-toggle:hover .mname{text-decoration:underline;text-underline-offset:3px}
-#leaderboard .method-chevron{font-size:14px;color:var(--accent);transition:transform .15s ease}
-#leaderboard .method-toggle[aria-expanded="true"] .method-chevron{transform:rotate(180deg)}
+#leaderboard .method-chevron{font-size:14px;color:var(--accent)}
 #leaderboard .method-details-row>td{padding:0;white-space:normal;background:var(--surface)}
 #leaderboard .method-details-row:hover{background:transparent}
 #leaderboard .method-details{padding:17px 25px 19px 66px;border-top:1px solid var(--line);border-left:3px solid var(--accent);white-space:normal}
