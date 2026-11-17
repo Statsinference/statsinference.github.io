@@ -29,8 +29,10 @@
 .comparison-charts .chart-tooltip-title{display:block;margin:0 0 3px;font-weight:650}
 .comparison-charts .chart-tooltip-configuration{margin-bottom:4px;color:var(--muted);font-size:11px}
 .comparison-charts .chart-tooltip-row{font-variant-numeric:tabular-nums}
-.comparison-charts .chart-guidance{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px 6px;margin:5px 0 0;color:var(--muted);font:11px/1.45 var(--body);text-align:center}
-.comparison-charts .chart-guidance-arrow{font-size:16px;line-height:1;color:var(--pfn)}
+.comparison-charts .chart-guidance{pointer-events:none}
+.comparison-charts .chart-guidance-background{fill:var(--surface);fill-opacity:.94;stroke:var(--line);stroke-width:1}
+.comparison-charts .chart-guidance-arrow{fill:none;stroke:var(--pfn);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.comparison-charts .chart-guidance-text{fill:var(--muted);font:10px var(--body)}
 @media(max-width:1000px){#methodology.comparison-charts{grid-template-columns:1fr}}
 @media(max-width:480px){.comparison-charts .comparison-card{padding:16px 12px 12px}.comparison-charts .comparison-plot{min-height:280px}}
 
