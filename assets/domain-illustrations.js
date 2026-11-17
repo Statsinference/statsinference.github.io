@@ -15,7 +15,7 @@
     cate:'Confounder X affects treatment A and outcome Y. The treatment also affects the outcome.',
     mediation:'Treatment A affects outcome Y both directly and through mediator M. Baseline confounder X points to A, M and Y.',
     iv:'Instrument Z affects treatment A, which affects outcome Y. Unobserved U affects both A and Y.',
-    proximal:'Unobserved U points to proxies Z and W, treatment A and outcome Y. Z points to A, and A points to Y.',
+    proximal:'Unobserved U points to proxies Z and W, treatment A and outcome Y. Z points to A, W points to Y, and A points to Y.',
     did_sc:'Treated and control trends before and after treatment. The post-treatment effect is the gap between the treated outcome and its parallel-trend counterfactual.',
     nonparametric_regression:'Observations around a smooth regression curve, with the fitted value marked at a query point.',
     quantile:'A cumulative distribution curve with a probability level and its corresponding quantile.',
@@ -24,7 +24,7 @@
   };
   // All SVG labels and paths below are fixed assets, not submission or API content.
   const text = (x,y,value,kind='label',anchor='middle') => `<text x="${x}" y="${y}" class="di-${kind}" text-anchor="${anchor}">${value}</text>`;
-  const path = (d,kind='edge',arrow=true) => `<path d="${d}" class="di-${kind}"${arrow?` marker-end="url(#di-arrow-${kind==='accent'?'accent':'ink'})"`:''}/>`;
+  const path = (d,kind='edge',arrow=true,edge='') => `<path d="${d}" class="di-${kind}"${arrow?` marker-end="url(#di-arrow-${kind==='accent'?'accent':'ink'})"`:''}${edge?` data-edge="${edge}"`:''}/>`;
   const node = (x,y,letter,label='',latent=false,width=58) => `<g class="di-node${latent?' di-latent':''}"><rect x="${x-width/2}" y="${y-17}" width="${width}" height="34" rx="9"/>${text(x,y+7,letter,'symbol')}</g>${label?text(x,y+35,label):''}`;
   const dot = (x,y,kind='accent',r=3.5) => `<circle cx="${x}" cy="${y}" r="${r}" class="di-dot di-${kind}-fill"/>`;
   const axes = (x,y,right,top) => path(`M ${x} ${y} V ${top}`,'axis')+path(`M ${x} ${y} H ${right}`,'axis');
@@ -45,7 +45,7 @@
       node(58,123,'Z','Instrument')+node(200,123,'A','Treatment')+node(342,123,'Y','Outcome'),
     proximal: () => path('M 175 35 L 85 59')+path('M 225 35 L 315 59')+
       path('M 189 43 L 145 113')+path('M 211 43 L 255 113')+
-      path('M 77 85 L 117 115')+path('M 166 133 H 234','accent')+
+      path('M 77 85 L 117 115')+path('M 323 85 L 283 115','edge',true,'W-Y')+path('M 166 133 H 234','accent')+
       node(200,24,'U','',true)+text(240,28,'Unobserved','label','start')+
       node(56,68,'Z')+text(49,102,'Treatment')+text(49,117,'proxy')+
       node(344,68,'W')+text(351,102,'Outcome')+text(351,117,'proxy')+
