@@ -220,14 +220,17 @@ function renderMetrics(){
 // estimand that may be studied in a domain. MathML avoids a network dependency.
 const potentialOutcome=(a)=>`<msup><mi>Y</mi><mrow><mo>(</mo><mn>${a}</mn><mo>)</mo></mrow></msup>`;
 const meanContrast=potentialOutcome(1)+'<mo>−</mo>'+potentialOutcome(0);
+const mediatorOutcome=(a)=>`<msup><mi>M</mi><mrow><mo>(</mo><mn>${a}</mn><mo>)</mo></mrow></msup>`;
+const nestedOutcome=(a)=>`<msup><mi>Y</mi><mrow><mo>(</mo><mn>1</mn><mo>,</mo>${mediatorOutcome(a)}<mo>)</mo></mrow></msup>`;
+const postOutcome=(a)=>`<msup><msub><mi>Y</mi><mtext>post</mtext></msub><mrow><mo>(</mo><mn>${a}</mn><mo>)</mo></mrow></msup>`;
 const mml=(body,label)=>`<math xmlns="http://www.w3.org/1998/Math/MathML" aria-label="${esc(label)}">${body}</math>`;
 const expectation=(inside)=>`<mi mathvariant="double-struck">E</mi><mo>[</mo>${inside}<mo>]</mo>`;
 const targetDefinitions={
  ate:mml('<mi>ATE</mi><mo>=</mo>'+expectation(meanContrast),'ATE equals the expected difference between potential outcomes under treatment and control'),
  cate:mml('<mi>CATE</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo>'+expectation(meanContrast+'<mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi>'),'CATE at x equals the expected treatment effect conditional on X equals x'),
- mediation:mml('<mi>NIE</mi><mo>=</mo>'+expectation('<mi>Y</mi><mo>(</mo><mn>1</mn><mo>,</mo><mi>M</mi><mo>(</mo><mn>1</mn><mo>)</mo><mo>)</mo><mo>−</mo><mi>Y</mi><mo>(</mo><mn>1</mn><mo>,</mo><mi>M</mi><mo>(</mo><mn>0</mn><mo>)</mo><mo>)</mo>'),'Natural indirect effect at treatment level one'),
+ mediation:mml('<mi>NIE</mi><mo>=</mo>'+expectation(nestedOutcome(1)+'<mo>−</mo>'+nestedOutcome(0)),'Natural indirect effect at treatment level one'),
  proximal:mml('<mi>CATE</mi><mo>(</mo><msup><mi>x</mi><mo>∗</mo></msup><mo>)</mo><mo>=</mo>'+expectation(meanContrast+'<mo>∣</mo><mi>X</mi><mo>=</mo><msup><mi>x</mi><mo>∗</mo></msup>'),'CATE at the query point x star'),
- did_sc:mml('<mi>ATT</mi><mo>=</mo>'+expectation('<msub><mi>Y</mi><mtext>post</mtext></msub><mo>(</mo><mn>1</mn><mo>)</mo><mo>−</mo><msub><mi>Y</mi><mtext>post</mtext></msub><mo>(</mo><mn>0</mn><mo>)</mo><mo>∣</mo><mi>A</mi><mo>=</mo><mn>1</mn>'),'Average treatment effect on the treated in the post period')
+ did_sc:mml('<mi>ATT</mi><mo>=</mo>'+expectation(postOutcome(1)+'<mo>−</mo>'+postOutcome(0)+'<mo>∣</mo><mi>A</mi><mo>=</mo><mn>1</mn>'),'Average treatment effect on the treated in the post period')
 };
 // The four future areas and IV encompass many targets. These are illustrative
 // examples only; they are not assertions about the unpublished / unspecified
