@@ -149,7 +149,7 @@ function methodCell(r,index){
  return `<button type="button" class="method-toggle" data-toggle-method="${index}" aria-expanded="${open}" aria-controls="method-details-${index}"><span class="mname">${esc(name)}</span><span class="method-chevron" aria-hidden="true">${open?'⌃':'⌄'}</span></button>`;
 }
 function methodDetails(r,index){
- const s=current(),ref=ArenaMethodReferences.lookup(task,r),facts=methodFacts(r,s).filter(([,value])=>s?.domain!=='iv'||!(/\bnot reported\b/i.test(String(value))));
+ const s=current(),ref=ArenaMethodReferences.lookup(task,r),facts=methodFacts(r,s).map(([label,value])=>[label,s?.domain==='iv'&&/\bnot reported\b/i.test(String(value))?'—':value]);
  const references=[];
  const paper=ref?.paper,paperURL=ArenaMethodReferences.safeURL(paper?.url,'paper');
  if(paperURL)references.push(`<div><strong>Method reference</strong> <a class="method-reference-link" href="${esc(paperURL)}" target="_blank" rel="noopener noreferrer">${esc(paper.title||'Paper')} ↗</a>${paper.citation?`<p>${esc(paper.citation)}</p>`:''}</div>`);
