@@ -47,7 +47,7 @@
     const below = cy + 12;
     const maxTop = Math.max(4, (host.clientHeight || 310) - tooltip.offsetHeight - 4);
     const clampY = v => Math.max(4, Math.min(v, maxTop));
-    const positions = [idealLeft, 4, maxLeft].flatMap(left => [above, below, maxTop].map(top => ({left, top:clampY(top)})));
+    const positions = [idealLeft, 4, maxLeft].flatMap(left => [above, below, 4, maxTop].map(top => ({left, top:clampY(top)})));
     const bounds = host._guidanceBounds;
     const intersects = p => bounds && p.left < bounds.right + 4 && p.left + tooltip.offsetWidth > bounds.left - 4 && p.top < bounds.bottom + 4 && p.top + tooltip.offsetHeight > bounds.top - 4;
     const chosen = positions.find(p => !intersects(p)) || positions[0];
