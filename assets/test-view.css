@@ -12,6 +12,17 @@
 #leaderboard th,#leaderboard td{padding:13px 11px;vertical-align:middle}
 #leaderboard thead th{font:500 11px var(--body);height:44px;padding-top:10px;padding-bottom:10px}
 #leaderboard .rank-cell{width:54px;text-align:center;color:var(--quiet)}
+#leaderboard .rank-medal{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;line-height:0}
+#leaderboard .rank-medal--gold{--medal-fill:#e6bd63;--medal-edge:#9b6e24;--medal-ink:#3f2c0b}
+#leaderboard .rank-medal--silver{--medal-fill:#cdd5dc;--medal-edge:#75838f;--medal-ink:#2a3a45}
+#leaderboard .rank-medal--bronze{--medal-fill:#d59c73;--medal-edge:#965f3e;--medal-ink:#482719}
+#leaderboard .rank-medal-ribbon{fill:var(--medal-edge);opacity:.8}
+#leaderboard .rank-medal-disc{fill:var(--medal-fill);stroke:var(--medal-edge);stroke-width:1}
+#leaderboard .rank-medal-ring{fill:none;stroke:var(--medal-edge);stroke-width:.6;opacity:.65}
+#leaderboard .rank-medal text{fill:var(--medal-ink);font:700 9px var(--body)}
+.domain-group-heading{margin:15px 14px 5px;color:var(--quiet);font:600 10px var(--body);letter-spacing:.075em;text-transform:uppercase}
+.domain-group:first-child .domain-group-heading{margin-top:5px}
+.domain-group+.domain-group{margin-top:12px}
 #leaderboard .method-cell{width:210px;text-align:left;white-space:normal}
 #leaderboard tbody .method-cell{font:400 12px var(--body);color:var(--fg);background:transparent}
 #leaderboard .num{font:11px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
