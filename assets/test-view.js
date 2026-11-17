@@ -1,12 +1,12 @@
 'use strict';
 // Test-only presentation; original evaluations remain unchanged in data/results.json.
 const DOMAINS = [
- {id:'ate',name:'ATE',desc:'Point estimates and confidence intervals for average treatment effects.'},
- {id:'cate',name:'CATE',desc:'Inference for conditional treatment effects at specified covariate queries.'},
+ {id:'ate',name:'Average Treatment Effect',desc:'Point estimates and confidence intervals for average treatment effects.'},
+ {id:'cate',name:'Conditional Average Treatment Effect',desc:'Inference for conditional treatment effects at specified covariate queries.'},
  {id:'mediation',name:'Mediation',desc:'Statistical inference for explicitly defined direct, indirect, and mediation targets.'},
  {id:'iv',name:'Instrumental Variables',desc:'Inference with instrumental variables under each task’s stated identification assumptions.'},
  {id:'proximal',name:'Proximal Causal Inference',desc:'Causal inference with proxy variables under each task’s stated assumptions.'},
- {id:'did_sc',name:'DiD / Synthetic Control',desc:'Inference for difference-in-differences and synthetic-control targets.'},
+ {id:'did_sc',name:'Difference-in-Differences / Synthetic Control',desc:'Inference for difference-in-differences and synthetic-control targets.'},
  {id:'nonparametric_regression',name:'Nonparametric Regression',desc:'Point estimates and confidence intervals for specified regression-function queries.'},
  {id:'quantile',name:'Quantile Inference',desc:'Inference for explicitly specified quantile and distributional targets.'},
  {id:'semi_supervised',name:'Semi-Supervised Inference',desc:'Statistical inference using labeled and unlabeled observations.'},
@@ -155,7 +155,7 @@ function render(){
  $('#suite-info').innerHTML=s?`<span>Test <b>${s.tables.toLocaleString('en-US')} tables</b></span><span>n <b>${s.sample_size}</b></span><span>Target <b>${esc(s.target)}</b></span><span>Nominal coverage <b>${(100*s.nominal_coverage).toFixed(0)}%</b></span>`:'<span>Results and the evaluation protocol will accompany this domain’s release.</span>';
  $('#suite-label').hidden=available.length<2;$('#suite-select').innerHTML=available.map(x=>`<option value="${esc(x.id)}" ${x.id===s?.id?'selected':''}>${esc(x.label)}</option>`).join('');
  $('#release-status').textContent=loadError?'RESULTS UNAVAILABLE':loaded?'TEST RESULTS':'LOADING RESULTS';
- $('#release-description').textContent=loadError||'Six metrics, presented as tables. Methods retain their own names and references.';
+ $('#release-description').textContent=loadError;$('#release-description').hidden=!loadError;
  $('#registry-link').href='https://github.com/Statsinference/stats-inference-arena/blob/main/dgp-submissions/registry/by-domain/'+task+'.md';
  renderMetrics();document.body.dataset.testView=loaded?'ready':'loading';
 }
@@ -183,3 +183,4 @@ window.addEventListener('hashchange',()=>{readHash();render();});
 window.ArenaTestView=Object.freeze({aggregateRows,getSuites:()=>testSuites,metrics:metricKeys});
 readHash();render();
 Promise.all(['data/results.json','data/mediation-fivefold.json','data/unified-test-2026-11-16.json'].map(path=>fetch(path+'?view=unified-2',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('Result data request failed');return r.json();}))).then(([raw,med,updates])=>{testSuites=buildTestSuites(raw,med,updates);loaded=true;render();}).catch(e=>{loaded=true;loadError='Could not load Test results. Please refresh or contact the maintainers.';render();console.error(e);});
+
