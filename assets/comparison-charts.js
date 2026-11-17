@@ -57,25 +57,35 @@
   }
   // Pick an in-plot area away from every marker and the nominal-coverage line.
   function drawGuidance(svg, host, box, plotW, plotH, positions, nominalY, nominal, width) {
-    const w = Math.min(148, Math.max(96, plotW - 12));
-    const h = 42;
-    const candidates = [];
-    for (let iy = 0; iy <= 10; iy++) {
-      for (let ix = 10; ix >= 0; ix--) {
-        const x = box.left + 4 + Math.max(0, plotW - w - 8) * ix / 10;
-        const y = box.top + 4 + Math.max(0, plotH - h - 8) * iy / 10;
-        const collidesPoint = positions.some(p => p.x >= x - 10 && p.x <= x + w + 10 && p.y >= y - 10 && p.y <= y + h + 10);
-        const collidesTarget = nominalY != null && nominalY >= y - 4 && nominalY <= y + h + 4;
-        const distance = Math.min(...positions.map(p => Math.hypot(p.x - (x + w/2), p.y - (y + h/2))));
-        candidates.push({x,y,collidesPoint,collidesTarget,distance});
+    let w = Math.min(148, Math.max(96, plotW - 12));
+    let h = 42;
+    const candidatesFor = (w, h) => {
+      const candidates = [];
+      for (let iy = 0; iy <= 10; iy++) {
+        for (let ix = 10; ix >= 0; ix--) {
+          const x = box.left + 4 + Math.max(0, plotW - w - 8) * ix / 10;
+          const y = box.top + 4 + Math.max(0, plotH - h - 8) * iy / 10;
+          const collidesPoint = positions.some(p => p.x >= x - 10 && p.x <= x + w + 10 && p.y >= y - 10 && p.y <= y + h + 10);
+          const collidesTarget = nominalY != null && nominalY >= y - 4 && nominalY <= y + h + 4;
+          const distance = Math.min(...positions.map(p => Math.hypot(p.x - (x + w/2), p.y - (y + h/2))));
+          candidates.push({x,y,collidesPoint,collidesTarget,distance});
+        }
       }
+      return candidates;
+    };
+    let candidates = candidatesFor(w, h);
+    let valid = candidates.filter(p => !p.collidesPoint && !p.collidesTarget);
+    let compact = false;
+    if (!valid.length && w > 96) {
+      w = 96; h = 38; compact = true;
+      candidates = candidatesFor(w, h);
+      valid = candidates.filter(p => !p.collidesPoint && !p.collidesTarget);
     }
-    const valid = candidates.filter(p => !p.collidesPoint && !p.collidesTarget);
     // On unusually dense plots retain the reference line and minimize marker
     // overlap; data markers are rendered after this soft background.
     const pool = valid.length ? valid : candidates.filter(p => !p.collidesTarget);
     const place = (pool.length ? pool : candidates).sort((a,b) => Number(a.collidesPoint)-Number(b.collidesPoint) || b.distance-a.distance)[0];
-    const group = svgElement('g', {class:'chart-guidance', 'data-x':place.x, 'data-y':place.y, 'data-width':w, 'data-height':h, 'aria-hidden':'true'});
+    const group = svgElement('g', {class:'chart-guidance' + (compact ? ' compact' : ''), 'data-x':place.x, 'data-y':place.y, 'data-width':w, 'data-height':h, 'aria-hidden':'true'});
     group.append(svgElement('rect', {x:place.x,y:place.y,width:w,height:h,rx:6,class:'chart-guidance-background'}));
     // One horizontal and one vertical arrow make the two directions explicit.
     const ax = place.x + 8, ay = place.y + 12;
