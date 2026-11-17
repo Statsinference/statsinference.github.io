@@ -1,6 +1,7 @@
 'use strict';
-// Distinct display labels are deduplicated across the first displayed suite in
-// each area. Baseline is one display name, even when its implementation varies.
+// These are reviewed estimand types of the current published evaluation suites.
+// CATE occurs in two areas. IV LATE is confirmed by the project owner; the
+// original IV result file does not itself specify the target.
 (function () {
   const host = document.getElementById('arena-overview-stats');
   if (!host) return;
@@ -14,7 +15,7 @@
     if (!api || document.body.dataset.testView !== 'ready') return;
     const error = document.getElementById('release-description');
     if (error && !error.hidden) {
-      for (const key of ['displayed-methods', 'metrics']) set(key, '—');
+      for (const key of ['estimand-types', 'metrics']) set(key, '—');
       return;
     }
     const metrics = Array.isArray(api.metrics) ? api.metrics : [];
@@ -22,15 +23,26 @@
     for (const suite of api.getSuites()) {
       if (!firstByDomain.has(suite.domain)) firstByDomain.set(suite.domain, suite);
     }
-    const names = new Set();
+    // Only specifically reviewed suite/domain combinations are included;
+    // future suites are not assigned an estimand by a name-based guess.
+    const reviewed = {
+      ate: {'ate-fixed-collection-report': 'ATE'},
+      cate: {'cate-fixed-collection-report': 'CATE'},
+      mediation: {'mediation-fivefold-2026-11-16': 'NIE1'},
+      iv: {'iv-v03-test': 'LATE'},
+      proximal: {'proximal-unified-2026-11-16-normalized': 'CATE'},
+      did_sc: {'did-test-2026-11-16': 'ATT'}
+    };
+    const estimands = new Set();
     for (const suite of firstByDomain.values()) {
-      for (const row of suite.rows || []) {
-        if (!metrics.some(key => typeof row[key] === 'number' && Number.isFinite(row[key]))) continue;
-        const label = row.family === 'classical' ? 'Baseline' : String(row.method || '').replace(/\s+S[0-9]+$/i, '').trim();
-        if (label) names.add(label.replace(/\s+/g, ' ').toLowerCase());
-      }
+      const key = reviewed[suite.domain]?.[suite.id];
+      if (!key) continue;
+      const reported = (suite.rows || []).some(row =>
+        metrics.some(metric => typeof row[metric] === 'number' && Number.isFinite(row[metric]))
+      );
+      if (reported) estimands.add(key);
     }
-    set('displayed-methods', names.size);
+    set('estimand-types', estimands.size);
     set('metrics', metrics.length);
   };
   const observer = new MutationObserver(update);
