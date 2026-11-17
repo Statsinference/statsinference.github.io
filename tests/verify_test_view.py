@@ -141,6 +141,13 @@ def assert_guidance_inside_plot(host, chart_id, nominal):
         assert arrow.count() == 1
         b = arrow.bounding_box()
         assert arrow.is_visible() and b and b['width'] > 1 and b['height'] > 1
+        label = group.locator('text.chart-guidance-text')
+        assert label.count() == 1 and label.text_content().strip()
+        text_box = label.bounding_box()
+        assert text_box and text_box['width'] > 1 and text_box['height'] > 1
+        ox = min(b['x']+b['width'],text_box['x']+text_box['width']) - max(b['x'],text_box['x'])
+        oy = min(b['y']+b['height'],text_box['y']+text_box['height']) - max(b['y'],text_box['y'])
+        assert not (ox > .5 and oy > .5), (chart_id, group.get_attribute('data-axis'), b, text_box)
     plot = svg.evaluate('''svg => {
         const vals=['data-plot-left','data-plot-top','data-plot-width','data-plot-height'].map(a=>Number(svg.getAttribute(a)));
         if (vals.some(v=>!Number.isFinite(v))) return null;
@@ -181,6 +188,37 @@ def assert_guidance_inside_plot(host, chart_id, nominal):
     ox = min(a['x']+a['width'], b['x']+b['width']) - max(a['x'],b['x'])
     oy = min(a['y']+a['height'], b['y']+b['height']) - max(a['y'],b['y'])
     assert not (ox > 0 and oy > 0), (chart_id, a, b)
+    assert_centered_guides_when_clear(svg, xguide, yguide, chart_id)
+
+
+def assert_centered_guides_when_clear(svg, xguide, yguide, chart_id):
+    """Test axis midpoints when clear; allow displacement to avoid collisions."""
+    plot = {key: float(svg.get_attribute('data-plot-' + key)) for key in ('left','top','width','height')}
+    def geometry(g):
+        return {key:float(g.get_attribute('data-' + key)) for key in ('x','y','width','height')}
+    current = [geometry(xguide), geometry(yguide)]
+    points=[]
+    for point in svg.locator('.chart-point').all():
+        transform = point.get_attribute('transform')
+        nums = re.findall(r'[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?', transform)
+        assert len(nums) == 2, transform
+        points.append((float(nums[0]), float(nums[1])))
+    reference = (float(svg.locator('.chart-reference').get_attribute('y1'))
+                 if chart_id == 'coverage-length-chart' else None)
+    for index, axis in enumerate(('x', 'y')):
+        rect = current[index].copy()
+        other = current[1-index]
+        plot_mid = plot['left']+plot['width']/2 if axis=='x' else plot['top']+plot['height']/2
+        rect[axis] = plot_mid - rect['width' if axis=='x' else 'height']/2
+        blocked = any(rect['x']-9 <= x <= rect['x']+rect['width']+9 and
+                      rect['y']-9 <= y <= rect['y']+rect['height']+9 for x,y in points)
+        blocked |= reference is not None and rect['y']-4 <= reference <= rect['y']+rect['height']+4
+        blocked |= (rect['x'] < other['x']+other['width']+4 and rect['x']+rect['width']+4 > other['x'] and
+                    rect['y'] < other['y']+other['height']+4 and rect['y']+rect['height']+4 > other['y'])
+        if not blocked:
+            actual_mid = current[index][axis] + current[index]['width' if axis=='x' else 'height']/2
+            step = (plot['width']-rect['width']-8 if axis=='x' else plot['height']-rect['height']-8)/10
+            assert abs(actual_mid-plot_mid) <= max(1,step), (chart_id, axis, current[index], plot)
 
 
 def assert_navigation_groups(page):
