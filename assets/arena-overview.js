@@ -50,7 +50,7 @@
   update();
 
   // Public, aggregate-only snapshot; the private registry is never fetched
-  // from the client. Keep the date visible; no automatic freshness is assumed.
+  // from the client. Preserve snapshot context in the card tooltip; freshness is not automatic.
   fetch('data/dgp-overview.json', { cache: 'no-cache' })
     .then(response => {
       if (!response.ok) throw new Error('Registry summary unavailable');
@@ -63,11 +63,11 @@
       }
       set('registered-dgps', summary.registered_dgps);
       const label = host.querySelector('[data-dgp-snapshot]');
-      if (label) label.textContent = 'Catalog records, pending review · as of ' + summary.as_of;
+      if (label) label.setAttribute('title', 'Catalog records, pending review · as of ' + summary.as_of);
     })
     .catch(() => {
       set('registered-dgps', '—');
       const label = host.querySelector('[data-dgp-snapshot]');
-      if (label) label.textContent = 'Catalog snapshot unavailable';
+      if (label) label.setAttribute('title', 'Catalog snapshot unavailable');
     });
 })();

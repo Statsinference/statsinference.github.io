@@ -268,7 +268,7 @@ def assert_overview(page, suites):
     }
     for key, expected in values.items():
         assert area.locator(f'[data-overview-stat="{key}"]').inner_text().strip() == str(expected), key
-    provenance = area.locator('[data-dgp-snapshot]').text_content().lower()
+    provenance = area.locator('[data-dgp-snapshot]').get_attribute('title').lower()
     assert snapshot['as_of'] in provenance and 'pending review' in provenance
 
 
