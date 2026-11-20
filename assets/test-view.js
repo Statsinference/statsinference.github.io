@@ -318,7 +318,6 @@ function render(){
  $('#methodology').hidden=comingSoon;
  $('#release-status').textContent=loadError?'RESULTS UNAVAILABLE':loaded?'TEST RESULTS':'LOADING RESULTS';
  $('#release-description').textContent=loadError;$('#release-description').hidden=!loadError;
- $('#registry-link').href='https://github.com/Statsinference/stats-inference-arena/blob/main/dgp-submissions/registry/by-domain/'+task+'.md';
  renderMetrics();document.body.dataset.testView=loaded?'ready':'loading';
 }
 function readHash(){

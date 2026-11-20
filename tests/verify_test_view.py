@@ -432,16 +432,19 @@ with sync_playwright() as p:
     page.on('pageerror', lambda e: errors.append(str(e)))
     load(page)
     page.evaluate('async()=>{await document.fonts.ready}')
-    assert page.title() == 'Statistical Inference Arena'
-    assert page.locator('#tab-ate').get_attribute('aria-selected') == 'true'
-    assert page.locator('#rank-metric').input_value() == 'rmse'
-    assert page.locator('#fam-chips button').all_inner_texts() == ['All methods', 'RFN', 'Baseline']
+    assert page.title() == 'StatArena — The Statistical Intelligence Arena'
+    assert page.locator('#home').is_visible()
+    assert page.locator('#home .home-contribute').get_attribute('href') == 'contribute-data/'
     assert page.locator('#tabs [data-t]').count() == 10
     assert_navigation_groups(page)
     suites = page.evaluate('ArenaTestView.getSuites()')
     assert len(suites) == 6
     page.wait_for_function('document.querySelector("[data-overview-stat=estimand-types]")?.textContent.trim() !== "—" && document.querySelector("[data-overview-stat=registered-dgps]")?.textContent.trim() !== "—"')
     assert_overview(page, suites)
+    page.locator('#tab-ate').click()
+    assert page.locator('#tab-ate').get_attribute('aria-selected') == 'true'
+    assert page.locator('#rank-metric').input_value() == 'rmse'
+    assert page.locator('#fam-chips button').all_inner_texts() == ['All methods', 'RFN', 'Baseline']
     bronze = page.evaluate('rankDisplay(3)')
     assert 'rank-medal--bronze' in bronze and 'Rank 3 (bronze medal)' in bronze
     assert page.evaluate('rankDisplay(4)') == '4'
@@ -548,8 +551,7 @@ with sync_playwright() as p:
     formula = re.sub(r'\s+', '', mediation_math.text_content())
     assert 'Y(1,M(1))' in formula and 'Y(1,M(0))' in formula
 
-    # Five baseline evaluations explicitly report 50 bootstrap replicates.
-    # The IV source does not provide this number, so leave it unknown.
+    # All six currently reported baselines use 50 bootstrap replicates.
     for domain in EXPECTED:
         page.locator(f'[data-t="{domain}"]').click()
         page.locator('[data-fam="classical"]').click()
@@ -560,7 +562,7 @@ with sync_playwright() as p:
         bootstrap = detail.locator('.method-detail-grid > div').filter(has=page.get_by_text('Bootstrap', exact=True))
         assert bootstrap.count() == 1
         value = bootstrap.locator('p').inner_text().strip()
-        assert value == ('—' if domain == 'iv' else '50'), (domain, value)
+        assert value == '50', (domain, value)
         page.locator('#leaderboard tbody .method-toggle').click()
         page.locator('[data-fam="all"]').click()
 
@@ -605,7 +607,7 @@ with sync_playwright() as p:
     page.locator('.method-toggle').click()
     assert_medals(page, next(s for s in suites if s['domain']=='iv'), 'rmse')
     assert page.locator('#leaderboard .rank-medal').get_attribute('aria-label') == 'Rank 2 (silver medal)'
-    assert_overview(page, suites)
+    assert not page.locator('#arena-overview-stats').is_visible()
     page.locator('[data-fam="pfn"]').click()
     assert page.locator('#leaderboard tbody tr[data-method]').count() == 1
     assert page.locator('#leaderboard .mname').inner_text() == 'IV-PFN'

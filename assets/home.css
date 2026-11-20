@@ -7,6 +7,19 @@
 .home-hero h1{grid-area:title;align-self:last baseline;font:400 clamp(56px,6vw,90px)/1.1 var(--display);letter-spacing:-2.5px;margin:12px 0 18px}
 .home-lead{max-width:40rem;font:400 clamp(19px,2.1vw,25px)/1.45 var(--display);color:var(--fg)}
 .home-description{max-width:40rem;margin:14px 0 0;font:13px/1.85 var(--body);color:var(--muted)}
+.home-contribute{
+  display:inline-flex;
+  align-items:center;
+  gap:.6rem;
+  margin-top:1.15rem;
+  padding:.6rem .9rem;
+  border:1px solid var(--line-strong);
+  border-radius:6px;
+  background:var(--surface);
+  color:var(--accent);
+  font-weight:650;
+}
+.home-contribute:hover{background:var(--hover)}
 .home-mark{grid-area:mark;justify-self:end;width:212px;height:212px;display:flex;justify-content:center;align-items:center;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
 .home-mark img{width:160px;height:160px;object-fit:contain;border-radius:14px}
 .home-panel .arena-overview{padding-top:20px;border-top:1px solid var(--line)}

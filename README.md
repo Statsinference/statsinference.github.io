@@ -4,6 +4,8 @@
 
 Public website source and published benchmark summaries.
 
+[Contribute data](data-submissions/README.md) by opening one pull request for a simulated DGP or real-data problem.
+
 Each research domain has one Test leaderboard with Bias, Variance, RMSE, Length, Coverage and Time. Select **Rank by** or click a metric header to change the ordering. Method names link to the corresponding paper or Hugging Face release.
 
 ## Development

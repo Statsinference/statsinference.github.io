@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Propose a simulated data-generating process or a real-data problem for StatArena through a GitHub pull request.">
+  <title>Contribute data · StatArena</title>
+  <link rel="icon" href="../assets/statsarena-logo.webp">
+  <link rel="stylesheet" href="../assets/site.css">
+  <link rel="stylesheet" href="contributions.css">
+  <script>
+    try {
+      const saved = localStorage.getItem("statsarena-theme-editorial");
+      document.documentElement.dataset.theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    } catch {}
+  </script>
+</head>
+<body class="contributions-page">
+  <a class="skip" href="#contribution-content">Skip to content</a>
+  <header class="contributions-header">
+    <div class="contributions-wrap">
+      <a class="contributions-brand" href="../#home"><img src="../assets/statsarena-logo.webp" alt="" width="34" height="34">StatArena</a>
+      <a href="../#home">Back to StatArena</a>
+    </div>
+  </header>
+  <main id="contribution-content" class="contributions-wrap" tabindex="-1">
+    <div class="contributions-hero">
+      <h1>Contribute data</h1>
+      <p>Propose a simulated design or a real-data problem for statistical inference. Use one GitHub pull request per proposal.</p>
+    </div>
+    <div class="contribution-tracks">
+      <section class="contribution-track" aria-labelledby="simulation-heading">
+        <h2 id="simulation-heading">Simulated DGP</h2>
+        <p>Describe the statistical question, what behavior the design tests and how its reference value can be checked. Point to real data or literature that motivated the design.</p>
+        <div class="contribution-links">
+          <a class="contribution-primary" href="https://github.com/Statsinference/statsinference.github.io/blob/main/data-submissions/simulated-dgp/README.md">Simulated DGP guide</a>
+          <a href="https://github.com/Statsinference/statsinference.github.io/blob/main/data-submissions/simulated-dgp/EXAMPLE.md">DNA methylation example</a>
+        </div>
+      </section>
+      <section class="contribution-track" aria-labelledby="real-data-heading">
+        <h2 id="real-data-heading">Real-data problem</h2>
+        <p>Give an answerable question, the study design and a public data link or authorized access route. Explain what the available data can identify. A reference estimate is welcome.</p>
+        <div class="contribution-links">
+          <a class="contribution-primary" href="https://github.com/Statsinference/statsinference.github.io/blob/main/data-submissions/real-data/README.md">Real-data problem guide</a>
+          <a href="https://github.com/Statsinference/statsinference.github.io/blob/main/data-submissions/real-data/EXAMPLE.md">Job-training experiment example</a>
+        </div>
+      </section>
+    </div>
+    <section class="contribution-process" aria-labelledby="process-heading">
+      <h2 id="process-heading">Submit and review</h2>
+      <ol>
+        <li>Fork the repository and copy the track template into its <code>submissions/</code> directory. Include a DAG when it clarifies the causal assumptions. A short explanation also works.</li>
+        <li>Open a pull request from your fork. Keep the proposal public-safe. A maintainer will arrange private sharing for generators, exact configurations and reference values intended for official evaluation.</li>
+        <li>The automated check reports missing sections or layout errors. A maintainer reviews the statistical question, assumptions, evidence and reproducibility in the PR.</li>
+      </ol>
+      <div class="contribution-links">
+        <a class="contribution-primary" href="https://github.com/Statsinference/statsinference.github.io/fork">Fork on GitHub</a>
+        <a href="https://github.com/Statsinference/statsinference.github.io/blob/main/data-submissions/README.md">Submission guide</a>
+        <a href="https://github.com/Statsinference/statsinference.github.io/blob/main/data-submissions/REVIEWING.md">Review criteria</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

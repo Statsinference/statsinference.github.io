@@ -1,0 +1,7 @@
+# Request review from the Arena maintainers for data proposals and their workflow.
+/data-submissions/ @shibo769 @brownight
+/contribute-data/ @shibo769 @brownight
+/.github/PULL_REQUEST_TEMPLATE/data-contribution.md @shibo769 @brownight
+/.github/workflows/data-contributions.yml @shibo769 @brownight
+/scripts/check_data_contribution.py @shibo769 @brownight
+/tests/test_data_contribution.py @shibo769 @brownight

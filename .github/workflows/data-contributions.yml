@@ -1,0 +1,55 @@
+name: Data contribution precheck
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request:
+    paths:
+      - .github/workflows/data-contributions.yml
+      - scripts/check_data_contribution.py
+      - tests/test_data_contribution.py
+      - data-submissions/*/EXAMPLE.md
+      - data-submissions/*/TEMPLATE.md
+      - data-submissions/*/README.md
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: data-contribution-${{ github.event_name }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # This job deliberately checks out the trusted base revision. The validator
+      # fetches only GitHub metadata and the proposed Markdown blob from the PR.
+      - name: Check out trusted validator
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - name: Validate contribution structure
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/check_data_contribution.py
+
+  self-test:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      # Maintainer branches can exercise changes to the validator before rollout.
+      - name: Check out maintainer revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Test precheck on both contribution tracks
+        run: python3 -m unittest discover -s tests -p test_data_contribution.py

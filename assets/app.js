@@ -80,7 +80,7 @@ function render(){const d=DOMAINS.find(x=>x.id===task),s=current(),available=sui
  const published=DATA.suites.some(x=>x.rows.some(r=>number(r.rmse)));$('#release-status').textContent=loadError?'RESULTS UNAVAILABLE':published?'EVALUATION RESULTS':'AWAITING FIRST RELEASE';$('#release-description').textContent=loadError|| (published?'Reported separately by domain, target and evaluation suite.':'Results will be published here. No illustrative scores.');
  $('#coverage-sub').textContent=number(s?.nominal_coverage)?'Nominal coverage '+(100*s.nominal_coverage).toFixed(0)+'%':'Coverage relative to nominal level';
  $('#table-note').textContent=s?`${s.aggregation||'Aggregation is specified in the evaluation release.'} ${s.hardware?'Hardware: '+s.hardware+'. ':''}${s.timing_scope?'Timing: '+s.timing_scope+'. ':''}Sorted within each split; coverage is not a higher-is-better score.`:'Bias is compared with zero. Coverage is compared with the nominal level. Missing metrics are shown as —.';
- $('#registry-link').href='https://github.com/Statsinference/stats-inference-arena/blob/main/dgp-submissions/registry/by-domain/'+task+'.md';renderResults();}
+ renderResults();}
 function writeHash(){const p=new URLSearchParams({domain:task,split});if(suiteId)p.set('suite',suiteId);try{history.replaceState(null,'','#'+p);}catch(e){/* Local preview without a browsing origin. */}}
 function readHash(){const p=new URLSearchParams(location.hash.slice(1));if(KNOWN.has(p.get('domain')))task=p.get('domain');if(['both','ID','OOD'].includes(p.get('split')))split=p.get('split');suiteId=p.get('suite')||'';}
 function chooseTask(id){if(!KNOWN.has(id))return;task=id;suiteId='';writeHash();render();$('#tab-'+id).scrollIntoView({block:'nearest',inline:'nearest'});}

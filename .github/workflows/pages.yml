@@ -27,7 +27,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html .nojekyll _site/
-          cp -R assets data ate cate did iv mediation proximal _site/
+          cp -R assets data ate cate contribute-data did iv mediation proximal _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

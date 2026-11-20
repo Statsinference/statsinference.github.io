@@ -48,7 +48,6 @@
 #leaderboard tbody tr:last-child th{border-bottom:0}
 .leaderboard-wrap:empty{min-height:150px}
 .leaderboard-wrap:empty:before{content:'Loading results…';display:block;padding:25px;color:var(--muted);font-size:12px}
-.registry-row{margin:18px 0 28px}
 .method-references a{overflow-wrap:anywhere}
 .domain-definition{margin-top:13px;color:var(--fg);font-family:var(--display);font-size:16px;line-height:1.5;overflow-wrap:anywhere}
 .domain-definition math{font-size:1.04em}
