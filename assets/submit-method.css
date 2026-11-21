@@ -6,6 +6,9 @@
 #method-submit-dialog .ms-heading{display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:12px}
 #method-submit-dialog h2{font:400 29px/1.2 var(--display)}
 #method-submit-dialog .ms-close{font:22px/1 var(--body);padding:2px 6px;color:var(--muted)}
+#method-submit-dialog .ms-choices:not([hidden]){display:grid;gap:8px}
+#method-submit-dialog .ms-choices :is(button,a){display:block;padding:10px 12px;border:1px solid var(--line-strong);border-radius:5px;color:var(--fg);font-size:14px;text-align:left;text-decoration:none}
+#method-submit-dialog .ms-choices :is(button,a):hover{background:var(--bg)}
 #method-submit-dialog .ms-intro{font-size:12px;color:var(--muted);margin-bottom:22px}
 #method-submit-dialog label{display:block;font-size:12px;margin-bottom:8px;font-weight:500}
 #method-submit-dialog input[type=url]{width:100%;border:1px solid var(--line-strong);border-radius:5px;background:var(--bg);color:var(--fg);padding:11px;font-size:13px;min-width:0}
@@ -14,7 +17,7 @@
 #method-submit-dialog .ms-status[data-kind=success]{color:var(--accent)}
 #method-submit-dialog .ms-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:20px}
 #method-submit-dialog .ms-send{border-radius:4px;padding:9px 16px;font-size:12px;background:var(--fg);color:var(--bg)}
-#method-submit-dialog .ms-cancel{padding:9px 8px;font-size:12px;color:var(--muted)}
+#method-submit-dialog .ms-back{padding:9px 8px;font-size:12px;color:var(--muted)}
 #method-submit-dialog .ms-challenge{margin-top:12px;min-height:0}
 #method-submit-dialog .ms-honeypot{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
 @media(max-width:380px){.method-submit-button{padding:6px 8px}#method-submit-dialog{padding:21px}}
