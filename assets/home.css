@@ -51,3 +51,30 @@
  .home-ambient .home-wave,.home-ambient .home-scatter{animation:none!important}
  .home-ambient .home-moving-dot{display:none}
 }
+
+
+/* User-provided StatArena workflow, displayed immediately above the Home statistics. */
+.home-workflow{
+  position:relative;z-index:1;margin:0 0 24px;max-width:100%;
+  --wf-canvas:var(--surface);--wf-border:var(--line-strong);
+  --wf-header:#eee9e2;--wf-rule:var(--line);
+  --wf-heading:var(--fg);--wf-flow:#577970;--wf-flow-secondary:#8da79c;
+  --wf-node:#fffcf8;--wf-node-border:var(--line-strong);--wf-node-subtle:#eeeae4;
+  --wf-node-text:var(--fg);--wf-focus:var(--accent);
+  --wf-focus-text:#ffffff;--wf-focus-soft:#e2f2eb;
+}
+:root[data-theme=dark] .home-workflow{
+  --wf-canvas:var(--surface);--wf-border:var(--line);
+  --wf-header:#302e2b;--wf-rule:var(--line);
+  --wf-heading:var(--fg);--wf-flow:#9bb9b0;--wf-flow-secondary:#718f83;
+  --wf-node:#36332e;--wf-node-border:#625d54;--wf-node-subtle:#303b36;
+  --wf-node-text:var(--fg);--wf-focus:#327166;
+  --wf-focus-text:#fffef9;--wf-focus-soft:#daeee6;
+}
+.home-workflow-scroll{max-width:100%;overflow-x:auto;overflow-y:hidden;border-radius:18px;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+.home-workflow svg{display:block;width:100%;height:auto;min-width:0}
+.home-workflow svg text{font:600 25px var(--body);fill:var(--wf-node-text)}
+.home-workflow svg text[font-size="23"]{font-size:23px;fill:var(--wf-heading)}
+.home-workflow svg text[font-size="26"]{font-size:26px;font-weight:700;fill:var(--wf-focus-text)}
+.home-workflow svg text[font-size="18"]{font-size:18px;font-weight:500;fill:var(--wf-focus-soft)}
+@media(max-width:760px){.home-workflow{margin-bottom:20px}.home-workflow svg{width:900px;min-width:900px;max-width:none}.home-workflow-scroll{border-radius:12px}}
