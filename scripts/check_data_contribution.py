@@ -185,8 +185,11 @@ def validate_markdown(raw, track):
         validate_simulated_structure(seen_structure, populated_structure, declarations)
 
 
-def in_submission_area(path):
-    parts = str(path).replace("\\", "/").lower().split("/")
+def in_submission_area(path, path_prefix=""):
+    normalized = str(path).replace("\\", "/").lower()
+    if not normalized.startswith(path_prefix):
+        return False
+    parts = normalized.removeprefix(path_prefix).split("/")
     if parts[0] != "data-submissions":
         return False
     if "submissions" in parts[1:]:
@@ -201,9 +204,9 @@ def in_submission_area(path):
     )
 
 
-def check_changes(changes, read_markdown):
+def check_changes(changes, read_markdown, *, path_prefix=""):
     touched = any(
-        in_submission_area(file.get(field, ""))
+        in_submission_area(file.get(field, ""), path_prefix)
         for file in changes
         for field in ("filename", "previous_filename")
     )
@@ -213,9 +216,10 @@ def check_changes(changes, read_markdown):
         raise ValidationError("A contribution PR should add or update exactly one proposal Markdown file.")
     file = changes[0]
     filename = file.get("filename", "")
-    match = SUBMISSION_PATH.fullmatch(filename)
-    if not match or len(filename) > 180:
-        raise ValidationError("Use data-submissions/<track>/submissions/<lowercase-kebab-case>.md.")
+    relative_filename = filename.removeprefix(path_prefix) if filename.startswith(path_prefix) else ""
+    match = SUBMISSION_PATH.fullmatch(relative_filename)
+    if not match or len(relative_filename) > 180:
+        raise ValidationError(f"Use {path_prefix}data-submissions/<track>/submissions/<lowercase-kebab-case>.md.")
     if file.get("status") not in ("added", "modified") or file.get("previous_filename"):
         raise ValidationError("Add or update one proposal in place.")
     validate_markdown(read_markdown(file), match.group(1))
@@ -281,7 +285,7 @@ def read_git_markdown(api, repository, head_sha, file):
         raise ValidationError("Could not decode the proposal contents.") from exc
 
 
-def check_pull_request(event, api):
+def check_pull_request(event, api, *, path_prefix=""):
     repository = repository_name(event["repository"]["full_name"])
     number = event["number"]
     if type(number) is not int or number <= 0:
@@ -303,13 +307,17 @@ def check_pull_request(event, api):
         raise ValidationError("The list of changed files changed during this check. Check the latest run.")
     # PR head objects from external forks are addressable through the destination
     # repository, keeping API calls within the job token's repository scope.
-    return check_changes(changes, lambda file: read_git_markdown(api, repository, head_sha, file))
+    return check_changes(
+        changes, lambda file: read_git_markdown(api, repository, head_sha, file), path_prefix=path_prefix
+    )
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--local-file", type=Path, help="Check a local proposal against its track template")
     parser.add_argument("--track", choices=tuple(TRACK_SECTIONS))
+    parser.add_argument("--path-prefix", choices=("website/",), default="",
+                        help="Check proposal paths under website/ in the research repository.")
     args = parser.parse_args()
     try:
         if args.local_file:
@@ -320,7 +328,7 @@ def main():
             checked = True
         else:
             event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_bytes())
-            checked = check_pull_request(event, get_api(os.environ.get("GH_TOKEN")))
+            checked = check_pull_request(event, get_api(os.environ.get("GH_TOKEN")), path_prefix=args.path_prefix)
     except (ValidationError, URLError, OSError, ValueError, KeyError, TypeError) as exc:
         message = str(exc) if isinstance(exc, ValidationError) else "Could not read the pull request or proposal."
         message = "Data contribution precheck failed. " + message

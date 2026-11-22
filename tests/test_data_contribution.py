@@ -19,6 +19,7 @@ from check_data_contribution import (  # noqa: E402
 SIMULATED = "simulated-dgp"
 REAL = "real-data"
 BASE_REPO = "Statsinference/statsinference.github.io"
+RESEARCH_REPO = "Statsinference/Statistical-Intelligence-Arena"
 PATH = f"data-submissions/{SIMULATED}/submissions/teaching-case.md"
 EDGES = "X -> M, M -> Y, X -> Y"
 
@@ -171,6 +172,26 @@ class PRPathTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "Use data-submissions/<track>/submissions/"):
             check_changes([{"filename": path, "status": "added"}], lambda _: self.fail("Read misplaced file"))
 
+    def test_research_repo_proposal_requires_website_prefix(self):
+        change = [{"filename": PATH, "status": "added"}]
+        self.assertFalse(
+            check_changes(change, lambda _: self.fail("Read outside website/"), path_prefix="website/")
+        )
+
+    def test_research_repo_rejects_misplaced_proposal_and_mixed_changes(self):
+        proposal_file = {"filename": "website/" + PATH, "status": "added"}
+        misplaced = {
+            "filename": "website/data-submissions/simulated-dgp/cate-rolling-yang-2014-gaussian-bump-v1.md",
+            "status": "added",
+        }
+        unrelated = {"filename": "README.md", "status": "modified"}
+        for files, message in (
+            ([misplaced], "Use website/data-submissions/<track>/submissions/"),
+            ([proposal_file, unrelated], "exactly one proposal Markdown file"),
+        ):
+            with self.subTest(files=files), self.assertRaisesRegex(ValidationError, message):
+                check_changes(files, lambda _: self.fail("Read disallowed file"), path_prefix="website/")
+
     def test_reject_mixed_prs_bad_paths_deletions_and_renames(self):
         candidates = [
             [{"filename": PATH, "status": "added"}, {"filename": "scripts/other.py", "status": "modified"}],
@@ -189,33 +210,41 @@ class PRPathTests(unittest.TestCase):
 
 class GitHubAdapterTests(unittest.TestCase):
     def setUp(self):
+        self.set_case(BASE_REPO, PATH)
+
+    def set_case(self, repository, path):
         self.event = {
-            "repository": {"full_name": BASE_REPO}, "number": 10,
+            "repository": {"full_name": repository}, "number": 10,
             "pull_request": {"head": {"sha": "a" * 40, "repo": {"full_name": "contributor/fork"}}},
         }
         self.head = "a" * 40
         self.blob = "e" * 40
-        self.filename = {"filename": PATH, "status": "added", "sha": self.blob}
+        self.filename = {"filename": path, "status": "added", "sha": self.blob}
         self.endpoints = {
-            f"repos/{BASE_REPO}/pulls/10": {
+            f"repos/{repository}/pulls/10": {
                 "head": {"sha": self.head}, "changed_files": 1,
             },
-            f"repos/{BASE_REPO}/pulls/10/files?per_page=100&page=1": [self.filename],
-            f"repos/{BASE_REPO}/git/commits/{self.head}": {"tree": {"sha": "0" * 40}},
-            f"repos/{BASE_REPO}/git/blobs/{self.blob}": {
+            f"repos/{repository}/pulls/10/files?per_page=100&page=1": [self.filename],
+            f"repos/{repository}/git/commits/{self.head}": {"tree": {"sha": "0" * 40}},
+            f"repos/{repository}/git/blobs/{self.blob}": {
                 "sha": self.blob, "encoding": "base64", "content": base64.b64encode(proposal()).decode(),
             },
         }
-        for index, name in enumerate(PATH.split("/")):
-            file = index == 3
+        parts = path.split("/")
+        for index, name in enumerate(parts):
+            file = index == len(parts) - 1
             suffix = str(index) * 40
-            self.endpoints[f"repos/{BASE_REPO}/git/trees/{suffix}"] = {"tree": [{
+            self.endpoints[f"repos/{repository}/git/trees/{suffix}"] = {"tree": [{
                 "path": name, "type": "blob" if file else "tree", "mode": "100644" if file else "040000",
                 "sha": self.blob if file else str(index + 1) * 40, "size": len(proposal()),
             }]}
 
     def test_fork_proposal_from_immutable_git_blob(self):
         self.assertTrue(check_pull_request(self.event, self.endpoints.__getitem__))
+
+    def test_research_repo_proposal_from_immutable_git_blob(self):
+        self.set_case(RESEARCH_REPO, "website/" + PATH)
+        self.assertTrue(check_pull_request(self.event, self.endpoints.__getitem__, path_prefix="website/"))
 
     def test_reject_symlink_or_mismatching_blob_without_reading_payload(self):
         leaf = self.endpoints[f"repos/{BASE_REPO}/git/trees/{'3' * 40}"]["tree"][0]
