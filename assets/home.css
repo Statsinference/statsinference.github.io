@@ -49,8 +49,8 @@
 .wf-route-depth{fill:none;stroke:var(--wf-depth);stroke-width:14;opacity:.1;stroke-linecap:round}
 .wf-route{fill:none;stroke:var(--wf-line);stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;opacity:.36}
 .wf-route-optional{stroke-width:1.25;stroke-dasharray:3 7;opacity:.3}
-.wf-node-labels text{font:550 28px var(--body);fill:var(--wf-label);letter-spacing:-.02em}
-.wf-focus-label{font:600 32px var(--body);fill:var(--wf-focus);letter-spacing:-.025em}
+.wf-node-labels text{font:550 26px var(--body);fill:var(--wf-label);letter-spacing:-.02em}
+.wf-focus-label{font:600 30px var(--body);fill:var(--wf-focus);letter-spacing:-.025em}
 .wf-focus-underline{fill:none;stroke:var(--wf-focus);stroke-width:1.3;stroke-linecap:round;opacity:.6}
 .wf-focus-caption{font:500 18px var(--body);fill:var(--wf-focus);letter-spacing:.045em}
 .wf-node-labels text,.wf-focus-label,.wf-focus-caption{stroke:var(--bg);stroke-opacity:.78;stroke-width:1.6px;stroke-linejoin:round;paint-order:stroke fill}
