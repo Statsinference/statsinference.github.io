@@ -14,8 +14,8 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 MAX_MARKDOWN_BYTES = 32_768
 MAX_API_BYTES = 16 * 1024 * 1024
 TRACK_SECTIONS = {
-    "simulated-dgp": "Data-generating process and estimand",
-    "real-data": "Target estimand and reference estimate",
+    "simulated-dgp": ("Variables and data-generating process", "Data-generating process and estimand"),
+    "real-data": ("Target estimand and reference estimate",),
 }
 SUBMISSION_PATH = re.compile(
     r"data-submissions/(simulated-dgp|real-data)/submissions/"
@@ -40,7 +40,7 @@ def required_sections(track):
         "Research question",
         "Study design and data source",
         "DAG and identification",
-        TRACK_SECTIONS[track],
+        *TRACK_SECTIONS[track],
         "Benchmark comparison",
         "Materials and access",
     )
@@ -109,7 +109,18 @@ def validate_markdown(raw, track):
 
 def in_submission_area(path):
     parts = str(path).replace("\\", "/").lower().split("/")
-    return parts[0] == "data-submissions" and "submissions" in parts[1:]
+    if parts[0] != "data-submissions":
+        return False
+    if "submissions" in parts[1:]:
+        return True
+    # Treat a proposal beside the simulated track's guides as a submission so
+    # the canonical path check can point the contributor to submissions/.
+    return (
+        len(parts) == 3
+        and parts[1] == "simulated-dgp"
+        and parts[2].endswith(".md")
+        and parts[2] not in {"readme.md", "template.md", "example.md"}
+    )
 
 
 def check_changes(changes, read_markdown):

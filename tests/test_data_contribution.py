@@ -80,17 +80,34 @@ class MarkdownTests(unittest.TestCase):
             with self.subTest(opening=opening), self.assertRaises(ValidationError):
                 validate_markdown(hidden, SIMULATED)
 
+    def test_simulated_proposal_requires_variables_and_data_generating_process(self):
+        heading = b"## Variables and data-generating process"
+        populated_section = heading + b"\nA short explanation with [a source](https://example.com).\n\n"
+        raw = proposal()
+        self.assertIn(populated_section, raw)
+        with self.assertRaisesRegex(ValidationError, heading.decode().removeprefix("## ")):
+            validate_markdown(raw.replace(populated_section, b""), SIMULATED)
+
 
 class PRPathTests(unittest.TestCase):
     def test_unrelated_pr_can_update_docs_and_website(self):
-        paths = ["index.html", ".github/workflows/data-contributions.yml",
-                 f"data-submissions/{SIMULATED}/example.md"]
+        guides = ("README.md", "TEMPLATE.md", "EXAMPLE.md")
+        paths = [
+            "index.html",
+            ".github/workflows/data-contributions.yml",
+            *(f"data-submissions/{SIMULATED}/{guide}" for guide in guides),
+        ]
         changes = [{"filename": path, "status": "added"} for path in paths]
         self.assertFalse(check_changes(changes, lambda _: self.fail("Read unrelated file")))
 
     def test_single_proposal_can_be_added_or_updated(self):
         for status in ("added", "modified"):
             self.assertTrue(check_changes([{"filename": PATH, "status": status}], lambda _: proposal()))
+
+    def test_simulated_proposal_beside_guides_requires_submissions_folder(self):
+        path = "data-submissions/simulated-dgp/cate-rolling-yang-2014-gaussian-bump-v1.md"
+        with self.assertRaisesRegex(ValidationError, "Use data-submissions/<track>/submissions/"):
+            check_changes([{"filename": path, "status": "added"}], lambda _: self.fail("Read misplaced file"))
 
     def test_reject_mixed_prs_bad_paths_deletions_and_renames(self):
         candidates = [

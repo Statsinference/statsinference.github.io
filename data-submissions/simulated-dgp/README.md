@@ -17,21 +17,22 @@ Propose one reproducible simulation that mirrors a documented study or isolates 
 | Research question | The statistical target, intended use and behavior under test. Explain why this question is worth adding to the benchmark. |
 | Study design and data source | The population or setting, unit of observation, relevant references and which settings are calibrated or introduced. Include the sampling structure and proposed table sizes. |
 | DAG and identification | Observed and latent variable roles, time ordering and identification assumptions. Use a DAG or describe who causes what. Document any intentional violations. |
-| Data-generating process and estimand | The table schema, generation steps, treatment or contrast, estimand and its units. Document what varies across scenarios and how the truth can be checked. |
+| Variables and data-generating process | The variable definitions and table schema, full structural equations, sampling order, dependencies and scenario settings. |
+| Data-generating process and estimand | The treatment or contrast, estimand and its units, and the calculation used to verify the reference value. |
 | Benchmark comparison | Expected outputs, a baseline, shared inputs and scoring. Specify the number of attempted replicates, scenario weighting if relevant, and the treatment of failures. |
 | Materials and access | Shareable references and reproducibility instructions. For official evaluation candidates, identify the files available for private review. |
 
 ### Document generation and truth
 
-- **Generation.** Record the order of draws, distributions, structural equations, parameter constraints, scenario grid and dependencies. Report how seeds are assigned, how many tables are generated and what each table contains. Provide a small run a reviewer can reproduce with a pinned code version or environment.
+- **Generation.** Define all variables and write the full structural equations or conditional sampling distributions. Include noise distributions, dependence, timing and the level of each draw where relevant. Document parameter constraints and scenario changes. Report how seeds are assigned, how many tables are generated and what each table contains. Provide a small run a reviewer can reproduce with a pinned code version or environment.
 - **Truth.** Tie the reference value to the exact estimand and scenario. Show an analytical calculation or give a reproducible numerical procedure. For Monte Carlo truth, document draw size and precision and check that approximation error is small enough for the proposed comparison.
 - **Comparison.** Use the same observed inputs and replicate tables across methods. Point-estimation tasks can use bias and RMSE. If methods return intervals, state the nominal level and report empirical coverage and interval length across replicates. Explain exclusions and report failures alongside the metrics.
 
-Public teaching examples can link authorized code and settings. Summaries for protected evaluation candidates can describe the design family and variables. Give the full generator, exact parameters and seeds, official test tables, and scenario-specific truths to maintainers through the agreed private channel.
+Public teaching examples can link authorized code and settings. For protected evaluation candidates, present complete symbolic equations and use named parameters for protected values. Give the full generator, exact parameters and seeds, official test tables, and scenario-specific truths to maintainers through the agreed private channel.
 
 ## 3. Copy the Markdown template
 
-Copy the block into `data-submissions/simulated-dgp/submissions/<slug>.md`. Use a lowercase, hyphenated slug, keep the six section headings in order and replace all placeholders. The same text is available as [TEMPLATE.md](TEMPLATE.md).
+Copy the block into `data-submissions/simulated-dgp/submissions/<slug>.md`. Use a lowercase, hyphenated slug, keep the seven section headings in order and replace all placeholders. The same text is available as [TEMPLATE.md](TEMPLATE.md).
 
 ```markdown
 # [TODO: Case title]
@@ -51,10 +52,17 @@ Copy the block into `data-submissions/simulated-dgp/submissions/<slug>.md`. Use 
 - **Variables and causal structure.** [TODO: Map observed and latent variables to their roles and available columns. Add a DAG or describe the directed relationships in text.]
 - **Assumptions.** [TODO: State the assumptions that identify the target or explain which assumption the stress test deliberately violates.]
 
+## Variables and data-generating process
+
+- **Variables and observed input.** [TODO: Define each generated or fixed variable, its support or units, whether it is observed or latent, and its role. Specify the table grain and columns given to each estimator.]
+- **Draw order and scenarios.** [TODO: State the sampling order, the level of each draw (such as unit, cluster or time period), and what varies or stays fixed across scenarios.]
+
+### Structural equations
+
+[TODO: Write the complete mathematical equations or conditional sampling distributions for all generated variables in draw order. Include deterministic transformations, link functions, error distributions and dependencies. Define every symbol and give time or cluster indices where relevant. Use named parameters for protected values and supply their exact settings in private review.]
+
 ## Data-generating process and estimand
 
-- **Observed input.** [TODO: Specify the table grain, column roles, and what the estimator receives.]
-- **Generator and scenarios.** [TODO: Summarize sampling, equations and scenario families at a shareable level, including what is varied and why.]
 - **Estimand.** [TODO: Define the contrast, scale, population and time horizon where relevant.]
 - **Truth check.** [TODO: Describe the analytical, numerical or Monte Carlo calculation reviewers can use to verify the reference value. Keep protected case-specific values and settings in private review.]
 

@@ -21,14 +21,28 @@ flowchart LR
 
 The observed exposure is `trauma_z`, the mediator is the vector of methylation probe columns, and the observed outcome is `cortisol_response`. The two simulation disturbances are independent of each other and of the fixed exposure design. When $c_1=0$, the arrow from the trauma score to the methylation profile is absent.
 
+## Variables and data-generating process
+
+Each row represents one subject. The standardized exposure $X_i=x_i$ is fixed to one of the 85 observed scores in the pinned snapshot. The continuous mediator vector $M_i$ has $p=1008$ probe values, and $Y_i$ is a continuous outcome. Methods receive only the exposure, probe columns and outcome.
+
+### Structural equations
+
+For every row $i$, draw $U_i$ and $\varepsilon_i$ independently. The draws are also independent across rows and across replicate tables. The fixed coefficient vector $\widehat{\Gamma}_X$ and outcome residual standard deviation $\widehat{\sigma}_Y$ come from the pinned snapshot. The code below constructs the outcome coefficient vector $\alpha_M$ using the 11 selected probes.
+
+$$
+\begin{aligned}
+U_i &\sim \mathcal N_p(0,\Sigma), & \Sigma_{jk}&=0.5^{|j-k|},\qquad 1\le j,k\le p,\\
+\varepsilon_i &\sim \mathcal N(0,\widehat{\sigma}_Y^2),\\
+M_i &= c_1\widehat{\Gamma}_X x_i+U_i,\\
+Y_i &= \alpha_M^{\mathsf T}M_i+0.5x_i+\varepsilon_i .
+\end{aligned}
+$$
+
+The scenarios vary $c_1$ while holding the exposure design, outcome coefficients and disturbance distributions fixed.
+
 ## Data-generating process and estimand
 
-$$
-M=c_1\widehat{\Gamma}_X X+U,\qquad
-Y=\alpha_M^{\mathsf T}M+0.5X+\varepsilon .
-$$
-
-Here $U$ is Gaussian with the specified AR(1) covariance and $\varepsilon$ is independent Gaussian noise. For a one-unit contrast on the standardized exposure scale, the joint natural indirect effect is
+For a one-unit contrast on the standardized exposure scale, the joint natural indirect effect is
 
 $$
 \operatorname{NIE}(x+1,x)
