@@ -31,13 +31,16 @@
 
 /* The header is a sibling of this clipped stage. Workflow light cannot extend
    into its title, introduction or logo, regardless of viewport or animation. */
-.home-stage{position:relative;isolation:isolate;overflow:hidden;container:workflow / inline-size;margin:0 0 26px;padding:0 0 8px}
-.home-workflow-copy{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);margin:12px 0 0}
-.home-workflow-copy .home-description{max-width:none;margin:0;font-size:clamp(13px,1.05vw,14px);line-height:1.9}
-.home-foundation{position:relative;z-index:2;margin:22px 0 0;text-align:center;font:400 clamp(16px,1.5vw,19px)/1.6 var(--display);color:var(--accent)}
+.home-stage{position:relative;isolation:isolate;overflow:hidden;container:workflow / inline-size;display:grid;grid-template-columns:minmax(0,1fr);margin:0 0 26px;padding:0 0 8px}
+/* Put the complete note in the open area below the left-hand curve. Sharing a
+   grid cell lets the stage grow if a narrower screen needs more lines. */
+.home-workflow-copy{position:relative;z-index:2;grid-area:1 / 1;align-self:start;justify-self:start;width:40%;margin:17.5cqw 0 8px 1%}
+.home-workflow-copy .home-description{max-width:none;margin:0;font-size:clamp(11.5px,1.16cqw,12.5px);line-height:1.6}
+.home-workflow-copy .home-description+.home-description{margin-top:6px}
+.home-foundation{position:relative;z-index:2;margin:8px 0 0;text-align:left;font:400 clamp(14px,1.5cqw,16px)/1.5 var(--display);color:var(--accent)}
 
 /* Stable labels, translucent routes, diffuse depth and a separate light stream. */
-.wf-scene{--wf-line:#628d7d;--wf-label:#5c7f73;--wf-focus:#326d5e;--wf-haze:#65b7a2;--wf-depth:#659887;position:relative;z-index:0;pointer-events:none;user-select:none}
+.wf-scene{--wf-line:#628d7d;--wf-label:#5c7f73;--wf-focus:#326d5e;--wf-haze:#65b7a2;--wf-depth:#659887;position:relative;z-index:0;grid-area:1 / 1;align-self:start;pointer-events:none;user-select:none}
 :root[data-theme=dark] .wf-scene{--wf-line:#8cbaaa;--wf-label:#99b9ac;--wf-focus:#9bd7bf;--wf-haze:#51aa88;--wf-depth:#62ab93}
 .wf-scene-wide{width:100%;aspect-ratio:1200/395;margin:0 auto}
 .wf-scene-compact{display:none}
@@ -56,9 +59,9 @@
 @container workflow (max-width:699px){
   .wf-scene-wide{display:none}
   .wf-scene-compact{display:block;width:min(100%,420px);aspect-ratio:420/570;margin:0 auto}
-  .home-workflow-copy{grid-template-columns:1fr;gap:12px;margin-top:20px}
-  .home-workflow-copy .home-description{font-size:13px;line-height:1.85}
-  .home-foundation{margin-top:18px;text-align:left;font-size:17px}
+  .home-workflow-copy{grid-area:2 / 1;width:100%;margin:20px 0 0}
+  .home-workflow-copy .home-description{font-size:12.5px;line-height:1.7}
+  .home-foundation{margin-top:10px;font-size:16px}
   .wf-node-labels text{font-size:23px}
   .wf-focus-label{font-size:26px}
   .wf-focus-caption{font-size:20px}
