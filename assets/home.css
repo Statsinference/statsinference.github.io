@@ -26,60 +26,49 @@
 @media(max-width:860px){.home-universities{gap:9px}.home-university{min-height:84px;padding:11px}.home-university img{max-height:55px}}
 @media(max-width:560px){.home-universities{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.home-university{min-height:76px;padding:10px}.home-university img{max-height:52px}}
 
-/* Subtle ambient statistical curves — decorative and scoped to the Home route. */
-.home-panel .home-ambient{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;overflow:hidden;color:var(--accent);opacity:.85}
-.home-panel>.home-hero,.home-panel>.arena-overview,.home-panel>.home-next,.home-panel>.home-universities{position:relative;z-index:1}
-.home-ambient .home-wave-line{fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;opacity:.32;vector-effect:non-scaling-stroke}
-.home-ambient .home-wave-b .home-wave-line{opacity:.24;stroke-width:1.3}
-.home-ambient .home-wave-c .home-wave-line{opacity:.20;stroke-width:1.35}
-.home-ambient .home-moving-dot{fill:currentColor;opacity:.45}
-.home-ambient .home-moving-dot-faint{opacity:.22}
-.home-ambient .home-scatter{opacity:.19;animation:home-point-float 17s ease-in-out infinite alternate}
-.home-ambient .home-wave-a{animation:home-wave-drift-a 19s ease-in-out infinite alternate}
-.home-ambient .home-wave-b{animation:home-wave-drift-b 23s ease-in-out infinite alternate}
-.home-ambient .home-wave-c{animation:home-wave-drift-c 27s ease-in-out infinite alternate}
-:root[data-theme=dark] .home-panel .home-ambient{opacity:.78}
-:root[data-theme=dark] .home-ambient .home-wave-line{stroke-width:1.4;opacity:.34}
-:root[data-theme=dark] .home-ambient .home-scatter{opacity:.26}
-@keyframes home-wave-drift-a{from{transform:translate(0,7px)}to{transform:translate(17px,-12px)}}
-@keyframes home-wave-drift-b{from{transform:translate(-11px,-8px)}to{transform:translate(9px,13px)}}
-@keyframes home-wave-drift-c{from{transform:translate(6px,11px)}to{transform:translate(-12px,-6px)}}
-@keyframes home-point-float{from{transform:translate(0,0);opacity:.15}to{transform:translate(-8px,13px);opacity:.27}}
-@media(max-width:700px){.home-hero{grid-template-areas:"kicker mark" "title mark" "copy copy"}.home-panel .home-ambient{opacity:.56}}
-@media(max-width:560px){.home-panel .home-ambient{opacity:.42}}
+/* Homepage-only animated workflow background; the former decorative waves and standalone diagram are retired. */
+.home-panel>.home-workflow-background{
+  position:absolute;top:58px;left:12%;width:100%;height:auto;
+  z-index:-1;overflow:visible;pointer-events:none;
+  opacity:.49;
+  -webkit-mask-image:linear-gradient(90deg, transparent 0%,rgba(0,0,0,.25) 25%, #000 57%);
+  mask-image:linear-gradient(90deg, transparent 0%,rgba(0,0,0,.25) 25%, #000 57%);
+  --wf-flow:#598579;--wf-flow-secondary:#789d90;
+  --wf-node-text:#426d62;--wf-focus:#246a5e;
+  --wf-diagnostic:#a8c1b5;--wf-diagnostic-text:#547f73;
+}
+:root[data-theme=dark] .home-panel>.home-workflow-background{
+  opacity:.5;
+  --wf-flow:#87b7a9;--wf-flow-secondary:#729f91;
+  --wf-node-text:#a0cbbd;--wf-focus:#8fd5c0;
+  --wf-diagnostic:#607f74;--wf-diagnostic-text:#95bfae;
+}
+.home-panel>.home-hero,.home-panel>.home-workflow-row,.home-panel>.arena-overview,.home-panel>.home-universities{position:relative;z-index:1}
+.home-workflow-background .wf-diagnostic-track{fill:none;stroke:var(--wf-diagnostic);stroke-width:1.4;stroke-dasharray:3 7}
+.home-workflow-background .wf-diagnostic-track circle{fill:var(--wf-flow);stroke:none}
+.home-workflow-background .wf-diagnostic-label{font:600 20px var(--body);letter-spacing:.035em;fill:var(--wf-diagnostic-text)}
+.home-workflow-background .wf-connector{fill:none;stroke:var(--wf-flow);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.home-workflow-background .wf-optional-connector{fill:none;stroke:var(--wf-flow-secondary);stroke-width:2;stroke-dasharray:5 7;stroke-linecap:round;stroke-linejoin:round;animation:wf-optional-flow 9s linear infinite}
+.home-workflow-background .wf-flow-tracers{stroke:var(--wf-focus);stroke-width:3;stroke-dasharray:14 95;opacity:.95;animation:wf-trace-flow 11s linear infinite}
+.home-workflow-background .wf-flow-tracers path:nth-child(2){animation:wf-breathe 7s ease-in-out infinite alternate}
+.home-workflow-background .wf-flow-particles{opacity:.96}
+.home-workflow-background .wf-node-labels text{font:600 29px var(--body);fill:var(--wf-node-text)}
+.home-workflow-background .wf-focus-label{font:700 34px var(--body);fill:var(--wf-focus);animation:wf-breathe 4.8s ease-in-out infinite alternate}
+.home-workflow-background .wf-focus-underline{fill:none;stroke:var(--wf-focus);stroke-width:3.5;stroke-linecap:round}
+.home-workflow-background .wf-focus-caption{font:600 19px var(--body);fill:var(--wf-focus)}
+.home-workflow-background .wf-node-labels text,.home-workflow-background .wf-focus-label,.home-workflow-background .wf-focus-caption,.home-workflow-background .wf-diagnostic-label{stroke:var(--bg);stroke-width:6px;stroke-linejoin:round;paint-order:stroke fill}
+@keyframes wf-trace-flow{to{stroke-dashoffset:-545}}
+@keyframes wf-optional-flow{to{stroke-dashoffset:-144}}
+@keyframes wf-breathe{from{opacity:.48}to{opacity:1}}
+@media(max-width:900px){
+  .home-panel>.home-workflow-background{top:150px;left:16%;width:113%;opacity:.32}
+}
+@media(max-width:560px){
+  .home-panel>.home-workflow-background{top:175px;left:3%;width:210%;opacity:.24}
+}
 @media(prefers-reduced-motion:reduce){
- .home-ambient .home-wave,.home-ambient .home-scatter{animation:none!important}
- .home-ambient .home-moving-dot{display:none}
-}
-
-
-/* Open, unboxed workflow diagram beside the mission text. */
-.home-workflow{
-  position:relative;z-index:1;width:100%;max-width:none;margin:0;
-  --wf-flow:#668b80;--wf-flow-secondary:#91a99f;
-  --wf-node-text:var(--fg);--wf-focus:var(--accent);
-  --wf-diagnostic:#b4c4ba;--wf-diagnostic-text:#577970;
-}
-:root[data-theme=dark] .home-workflow{
-  --wf-flow:#95b8ac;--wf-flow-secondary:#7f9f93;
-  --wf-node-text:var(--fg);--wf-focus:var(--accent);
-  --wf-diagnostic:#57796e;--wf-diagnostic-text:#a6c7bb;
-}
-.home-workflow-scroll{max-width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
-.home-workflow svg{display:block;width:100%;height:auto;min-width:0;overflow:visible}
-.home-workflow .wf-diagnostic-track{stroke:var(--wf-diagnostic);stroke-width:1.5;stroke-dasharray:3 7}
-.home-workflow .wf-diagnostic-track circle{fill:var(--wf-flow);stroke:none}
-.home-workflow svg .wf-diagnostic-label{font:600 20px var(--body);letter-spacing:.035em;fill:var(--wf-diagnostic-text)}
-.home-workflow .wf-connector{stroke:var(--wf-flow);stroke-width:2.4}
-.home-workflow .wf-optional-connector{stroke:var(--wf-flow-secondary);stroke-width:2.1;stroke-dasharray:5 7}
-.home-workflow svg .wf-node-labels text{font:600 29px var(--body);fill:var(--wf-node-text)}
-.home-workflow svg .wf-focus-label{font:700 34px var(--body);fill:var(--wf-focus)}
-.home-workflow .wf-focus-underline{fill:none;stroke:var(--wf-focus);stroke-width:3.5;stroke-linecap:round}
-.home-workflow svg .wf-focus-caption{font:600 19px var(--body);fill:var(--wf-focus)}
-.home-workflow svg .wf-node-labels text,.home-workflow svg .wf-focus-label,.home-workflow svg .wf-focus-caption,.home-workflow svg .wf-diagnostic-label{stroke:var(--bg);stroke-width:6px;stroke-linejoin:round;paint-order:stroke fill}
-@media(max-width:760px){
-  .home-workflow{width:100%;margin-bottom:20px}
-  .home-workflow svg{width:760px;min-width:760px;max-width:none}
+  .home-workflow-background .wf-flow-tracers,.home-workflow-background .wf-optional-connector,.home-workflow-background .wf-focus-label{animation:none!important}
+  .home-workflow-background .wf-flow-particles{display:none}
 }
 
 /* Align the benchmark mission and the workflow diagram in a single editorial row. */
@@ -87,7 +76,7 @@
   position:relative;z-index:1;display:grid;
   grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);
   gap:clamp(20px,3.5vw,54px);
-  align-items:center;
+  align-items:center;min-height:280px;
   margin:0 0 26px;
 }
 .home-workflow-copy{min-width:0}
