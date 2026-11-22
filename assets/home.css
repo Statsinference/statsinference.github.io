@@ -1,27 +1,45 @@
-/* Home layout and workflow scenery are scoped to the homepage. */
-.home-panel{position:relative;isolation:isolate;overflow:hidden;min-height:calc(100vh - 150px);padding:26px 0 30px}
-.home-stage{position:relative;isolation:isolate;container:home / inline-size;min-height:620px;padding:28px 0 32px}
-.home-hero{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"kicker mark" "title mark" "copy mark";align-items:center;column-gap:clamp(20px,3vw,42px);min-height:260px;padding:18px 0 36px}
+/* Home-only layout; the existing domain leaderboards and theme palette stay unchanged. */
+.home-panel{position:relative;isolation:isolate;overflow:hidden;min-height:calc(100vh - 150px);padding:56px 0 30px}
+.home-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"kicker mark" "title mark" "copy mark";align-items:center;column-gap:clamp(12px,2vw,34px);padding:18px 0 36px}
 .home-hero>.home-kicker{grid-area:kicker}
-.home-hero-copy{grid-area:copy;min-width:0;max-width:500px}
+.home-hero-copy{grid-area:copy;min-width:0;max-width:670px}
 .home-kicker,.home-next>span{display:block;font:10px/1.6 var(--mono);letter-spacing:.075em;color:var(--quiet)}
 .home-hero h1{grid-area:title;font:400 clamp(56px,6vw,90px)/1.1 var(--display);letter-spacing:-2.5px;margin:12px 0 18px}
-.home-lead{max-width:32rem;font:400 clamp(19px,2.1vw,25px)/1.45 var(--display);color:var(--fg)}
+.home-lead{max-width:40rem;font:400 clamp(19px,2.1vw,25px)/1.45 var(--display);color:var(--fg)}
 .home-description{max-width:40rem;margin:14px 0 0;font:13px/1.85 var(--body);color:var(--muted)}
-.home-mark{grid-area:mark;justify-self:end;align-self:start;width:164px;height:164px;display:flex;justify-content:center;align-items:center;border:1px solid var(--line);border-radius:18px;background:color-mix(in srgb,var(--surface) 78%,transparent)}
-.home-mark img{width:128px;height:128px;object-fit:contain;border-radius:14px}
-.home-workflow-row{position:relative;z-index:2;width:39%;margin:96px 0 0}
-.home-workflow-copy{min-width:0}
-.home-workflow-copy .home-description{max-width:56ch;margin:0;font-size:clamp(13px,1.06vw,15px);line-height:1.9}
-.home-panel .arena-overview{position:relative;z-index:2;padding-top:20px;border-top:1px solid var(--line)}
+.home-mark{grid-area:mark;justify-self:end;width:212px;height:212px;display:flex;justify-content:center;align-items:center;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.home-mark img{width:160px;height:160px;object-fit:contain;border-radius:14px}
+.home-panel .arena-overview{padding-top:20px;border-top:1px solid var(--line)}
 .home-next{padding:28px 0 15px;margin-top:20px;border-top:1px solid var(--line)}
 .home-next p{font:13px/1.75 var(--body);color:var(--muted);margin-top:8px;max-width:50rem}
 .side-home.on{background:var(--hover);border-color:var(--line-strong);font-weight:600}
+@media(max-width:1050px){.home-mark{width:150px;height:150px}.home-mark img{width:116px;height:116px}}
+@media(max-width:860px){.home-panel{padding-top:28px;min-height:calc(100vh - 100px)}.home-hero{padding-bottom:26px}}
+@media(max-width:560px){.home-kicker{font-size:9px}.home-hero h1{font-size:clamp(40px,12vw,50px);letter-spacing:-1.8px;margin:8px 0 12px}.home-lead{font-size:20px}.home-description{font-size:12px}.home-mark{width:70px;height:70px;border-radius:12px}.home-mark img{width:56px;height:56px;border-radius:8px}.home-panel{padding-top:30px}.home-next{margin-top:12px}}
+
+/* Institutional logo strip on Home only. Preserve marks without recoloring. */
+.home-universities{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:22px 0 4px}
+.home-university{display:flex;align-items:center;justify-content:center;min-width:0;min-height:90px;padding:8px 12px;border:0;border-radius:0;background:transparent;transition:opacity .18s,transform .18s}
+.home-university:hover{opacity:.78;transform:translateY(-2px)}
+.home-university img{display:block;width:auto;max-width:100%;height:auto;max-height:62px;object-fit:contain}
+.home-university:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:860px){.home-universities{gap:9px}.home-university{min-height:84px;padding:11px}.home-university img{max-height:55px}}
+@media(max-width:560px){.home-universities{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.home-university{min-height:76px;padding:10px}.home-university img{max-height:52px}}
+
+
+@media(max-width:700px){.home-hero{grid-template-areas:"kicker mark" "title mark" "copy copy"}}
+
+/* The header is a sibling of this clipped stage. Workflow light cannot extend
+   into its title, introduction or logo, regardless of viewport or animation. */
+.home-stage{position:relative;isolation:isolate;overflow:hidden;container:workflow / inline-size;margin:0 0 26px;padding:0 0 8px}
+.home-workflow-copy{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);margin:12px 0 0}
+.home-workflow-copy .home-description{max-width:none;margin:0;font-size:clamp(13px,1.05vw,14px);line-height:1.9}
+.home-foundation{position:relative;z-index:2;margin:22px 0 0;text-align:center;font:400 clamp(16px,1.5vw,19px)/1.6 var(--display);color:var(--accent)}
 
 /* Stable labels, translucent routes, diffuse depth and a separate light stream. */
-.wf-scene{--wf-line:#628d7d;--wf-label:#5c7f73;--wf-focus:#326d5e;--wf-haze:#65b7a2;--wf-depth:#659887;pointer-events:none;user-select:none}
+.wf-scene{--wf-line:#628d7d;--wf-label:#5c7f73;--wf-focus:#326d5e;--wf-haze:#65b7a2;--wf-depth:#659887;position:relative;z-index:0;pointer-events:none;user-select:none}
 :root[data-theme=dark] .wf-scene{--wf-line:#8cbaaa;--wf-label:#99b9ac;--wf-focus:#9bd7bf;--wf-haze:#51aa88;--wf-depth:#62ab93}
-.wf-scene-wide{position:absolute;z-index:0;top:calc(320px - 27.5cqw);left:0;width:100%;aspect-ratio:1200/650}
+.wf-scene-wide{width:100%;aspect-ratio:1200/395;margin:0 auto}
 .wf-scene-compact{display:none}
 .home-workflow-background{display:block;width:100%;height:100%;overflow:visible}
 .wf-motion{position:absolute;inset:0;z-index:1;display:block;width:100%;height:100%;pointer-events:none}
@@ -31,38 +49,19 @@
 .wf-node-labels text{font:550 28px var(--body);fill:var(--wf-label);letter-spacing:-.02em}
 .wf-focus-label{font:600 32px var(--body);fill:var(--wf-focus);letter-spacing:-.025em}
 .wf-focus-underline{fill:none;stroke:var(--wf-focus);stroke-width:1.3;stroke-linecap:round;opacity:.6}
-.wf-focus-caption{font:500 16px var(--body);fill:var(--wf-focus);letter-spacing:.045em}
+.wf-focus-caption{font:500 18px var(--body);fill:var(--wf-focus);letter-spacing:.045em}
 .wf-node-labels text,.wf-focus-label,.wf-focus-caption{stroke:var(--bg);stroke-opacity:.78;stroke-width:1.6px;stroke-linejoin:round;paint-order:stroke fill}
 
-/* Institutional logo strip. */
-.home-universities{position:relative;z-index:2;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:22px 0 4px}
-.home-university{display:flex;align-items:center;justify-content:center;min-width:0;min-height:90px;padding:8px 12px;border:0;border-radius:0;background:transparent;transition:opacity .18s,transform .18s}
-.home-university:hover{opacity:.78;transform:translateY(-2px)}
-.home-university img{display:block;width:auto;max-width:100%;height:auto;max-height:62px;object-fit:contain}
-.home-university:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-
-@container home (max-width:900px){
-  .home-mark{width:140px;height:140px}.home-mark img{width:108px;height:108px}
-  .home-hero-copy{max-width:440px}
-  .wf-focus-caption{font-size:20px}
-}
-/* Narrow screens use a complete vertical graph, with no enlarged, cropped SVG. */
-@container home (max-width:699px){
+@container workflow (max-width:900px){.wf-focus-caption{font-size:20px}}
+@container workflow (max-width:699px){
   .wf-scene-wide{display:none}
-  .wf-scene-compact{display:block;position:relative;z-index:0;width:min(100%,420px);aspect-ratio:420/620;margin:22px auto 26px}
-  .home-hero{grid-template-areas:"kicker mark" "title mark" "copy copy";min-height:0;padding:12px 0 10px;column-gap:14px}
-  .home-hero-copy{max-width:36rem;margin-top:4px}
-  .home-mark{width:90px;height:90px;align-self:center;border-radius:14px}
-  .home-mark img{width:70px;height:70px;border-radius:10px}
-  .home-hero h1{font-size:clamp(42px,11cqw,70px);letter-spacing:-1.8px;margin:8px 0 12px}
-  .home-kicker{font-size:9px;max-width:26ch}
-  .home-workflow-row{width:100%;margin:0}
-  .home-workflow-copy .home-description{max-width:68ch;font-size:13px;line-height:1.85}
+  .wf-scene-compact{display:block;width:min(100%,420px);aspect-ratio:420/570;margin:0 auto}
+  .home-workflow-copy{grid-template-columns:1fr;gap:12px;margin-top:20px}
+  .home-workflow-copy .home-description{font-size:13px;line-height:1.85}
+  .home-foundation{margin-top:18px;text-align:left;font-size:17px}
   .wf-node-labels text{font-size:23px}
   .wf-focus-label{font-size:26px}
   .wf-focus-caption{font-size:20px}
 }
-@media(max-width:860px){.home-panel{padding-top:10px;min-height:calc(100vh - 100px)}.home-universities{gap:9px}.home-university{min-height:84px;padding:11px}.home-university img{max-height:55px}}
-@media(max-width:560px){.home-stage{padding-top:18px}.home-lead{font-size:20px}.home-universities{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.home-university{min-height:76px;padding:10px}.home-university img{max-height:52px}.home-next{margin-top:12px}}
 @media(prefers-reduced-motion:reduce){.wf-motion{display:none}}
-@media print{.wf-motion{display:none}.wf-route-depth,.wf-atmosphere{display:none}}
+@media print{.wf-motion,.wf-route-depth,.wf-atmosphere{display:none}}
