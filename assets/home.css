@@ -25,6 +25,12 @@
 .home-university:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 @media(max-width:860px){.home-universities{gap:9px}.home-university{min-height:84px;padding:11px}.home-university img{max-height:55px}}
 @media(max-width:560px){.home-universities{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.home-university{min-height:76px;padding:10px}.home-university img{max-height:52px}}
+.home-moore-threads{display:flex;justify-content:center;align-items:center;width:fit-content;max-width:100%;margin:8px auto 4px;padding:8px 12px;transition:opacity .18s,transform .18s}
+.home-moore-threads:hover{opacity:.78;transform:translateY(-2px)}
+.home-moore-threads:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.home-moore-threads img{display:block;width:160px;max-width:100%;height:auto}
+.home-moore-threads .home-moore-threads-dark,:root[data-theme=dark] .home-moore-threads img{display:none}
+:root[data-theme=dark] .home-moore-threads .home-moore-threads-dark{display:block}
 
 
 @media(max-width:700px){.home-hero{grid-template-areas:"kicker mark" "title mark" "copy copy"}}
