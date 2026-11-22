@@ -10,6 +10,6 @@
 
 ## Checklist
 
-- [ ] This PR adds or updates one case under the corresponding track's `submissions/` directory.
+- [ ] This PR adds or updates one case under the corresponding track's `submissions/` directory inside `website/data-submissions/`.
 - [ ] The case follows the track template and describes its assumptions, data source and evaluation target.
-- [ ] I checked what can be shared in this public PR and kept restricted materials in the agreed private review channel.
+- [ ] I checked sharing permissions and kept restricted materials in the agreed review channel.

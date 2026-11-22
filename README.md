@@ -1,17 +1,17 @@
-# Statistical Inference Arena
+# StatArena leaderboard deployment
 
 [Open the leaderboard](https://statsinference.github.io/)
 
-Public website source and published benchmark summaries.
+This repository publishes the leaderboard on GitHub Pages. Development, proposals and review take place in the [private StatArena repository](https://github.com/Statsinference/Statistical-Intelligence-Arena).
 
-[Contribute data](data-submissions/README.md) by opening one pull request for a simulated DGP or real-data problem.
+[Contribute data](https://github.com/Statsinference/Statistical-Intelligence-Arena/blob/main/website/data-submissions/README.md) by opening one pull request in the private repository for a simulated DGP or real-data problem.
 
 Each research domain has one Test leaderboard with Bias, Variance, RMSE, Length, Coverage and Time. Select **Rank by** or click a metric header to change the ordering. Method names link to the corresponding paper or Hugging Face release.
 
-## Development
+## Published site
 
 - `index.html` and `assets/`: website presentation and interactions.
 - `data/`: reported summaries and retained source metadata.
 - `tests/verify_test_view.py`: result, ranking and browser checks.
 
-GitHub Pages publishes the website from this repository. The private research repository and its DGP workflow are separate.
+Maintainers publish reviewed revisions from the private repository's `website/` directory.

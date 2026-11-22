@@ -28,7 +28,7 @@ Propose one statistically answerable question about an existing dataset. A revie
 
 ## 3. Copy the Markdown template
 
-Copy only the contents of the block into `data-submissions/real-data/submissions/<slug>.md`. Use a lowercase, hyphenated slug and keep the six section headings in order. Replace every placeholder with your own proposal. The same text is available as [TEMPLATE.md](TEMPLATE.md).
+Copy only the contents of the block into `website/data-submissions/real-data/submissions/<slug>.md`. Use a lowercase, hyphenated slug and keep the six section headings in order. Replace every placeholder with your own proposal. The same text is available as [TEMPLATE.md](TEMPLATE.md).
 
 ```markdown
 # [TODO: Case title]
@@ -67,15 +67,15 @@ Copy only the contents of the block into `data-submissions/real-data/submissions
 
 ## 4. Check and open the pull request
 
-1. Fork the [StatArena website repository](https://github.com/Statsinference/statsinference.github.io) and create a branch from `main`. Add the single Markdown proposal.
+1. Create a branch from `main` in the [private StatArena repository](https://github.com/Statsinference/Statistical-Intelligence-Arena). Add the single Markdown proposal.
 2. Check the section headings and follow the preparation steps from the cited data source. Verify sample counts and the reference calculation, if supplied. Keep restricted records, credentials, and links that require temporary access out of the PR.
 3. Run the format check locally from the repository root. Replace `your-study` with your file slug.
 
    ```bash
-   python scripts/check_data_contribution.py --track real-data --local-file data-submissions/real-data/submissions/your-study.md
+   python website/scripts/check_data_contribution.py --track real-data --local-file website/data-submissions/real-data/submissions/your-study.md
    ```
 
-4. Open a pull request to the website repository's `main`, complete the [submission checklist](../../.github/PULL_REQUEST_TEMPLATE/data-contribution.md), and address check failures or reviewer feedback in that PR. The automated check validates structure. A reviewer assesses the design, the proposed comparison and reproducibility. Evaluation inclusion is a separate curator decision.
+4. [Open a pull request](https://github.com/Statsinference/Statistical-Intelligence-Arena/compare) to `main`, complete the [submission checklist](../../.github/PULL_REQUEST_TEMPLATE/data-contribution.md), and address check failures or reviewer feedback in that PR. The automated check validates structure. A reviewer assesses the design, the proposed comparison and reproducibility. Evaluation inclusion is a separate curator decision.
 
 ## Worked public example
 

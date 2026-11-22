@@ -36,4 +36,4 @@ If you generated your own tables, describe how you sampled DGP families and para
 - **Runtime, if reported.** [Give mean seconds per study, hardware, and whether the timing includes interval estimation, loading and warm-up.]
 - **Public starter results, if available.** [Link predictions or scores and identify the development or public reference test split.]
 
-The official CSV uses `table_id,estimate,ci_lower,ci_upper`. Return one row for every ID in the supplied `predictions_template.csv`. Arena maintainers score the official results. [Submit the method card](https://github.com/Statsinference/statsinference.github.io/issues/new?template=mediation-method.yml).
+The official CSV uses `table_id,estimate,ci_lower,ci_upper`. Return one row for every ID in the supplied `predictions_template.csv`. Arena maintainers score the official results. [Method submission guide](https://github.com/Statsinference/Statistical-Intelligence-Arena/blob/main/website/method-submissions/README.md).

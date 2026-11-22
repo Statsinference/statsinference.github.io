@@ -1,6 +1,6 @@
 # Contribute data to StatArena
 
-Propose one simulated design or one real-data problem per pull request. The public submission describes the research question and how reviewers can assess it.
+Propose one simulated design or one real-data problem per pull request. Describe the research question and how reviewers can assess it.
 
 | Track | What to propose | Start here |
 | --- | --- | --- |
@@ -9,14 +9,14 @@ Propose one simulated design or one real-data problem per pull request. The publ
 
 ## Open a pull request
 
-1. [Fork the website repository](https://github.com/Statsinference/statsinference.github.io/fork) and create a branch from `main`.
-2. Copy the template for your track into its `submissions/` directory. Create that directory if it is empty. Choose a lowercase, hyphenated filename such as `job-training-earnings.md`. Keep the template headings and replace the prompts with your case.
-3. Commit the single case file. On GitHub, open **Pull requests → New pull request → compare across forks**. Choose the StatArena website repository's `main` as the base and your fork's branch as the compare branch. Use the [data contribution PR checklist](../.github/PULL_REQUEST_TEMPLATE/data-contribution.md) in the description.
-4. Check the **Data contribution precheck** result and address any requested revisions in the same PR. A maintainer will assign a reviewer.
+1. Create a branch from `main` in the [private StatArena repository](https://github.com/Statsinference/Statistical-Intelligence-Arena).
+2. Copy the template for your track into its `submissions/` directory under `website/data-submissions/`. Create that directory if it is empty. Choose a lowercase, hyphenated filename such as `job-training-earnings.md`. Keep the template headings and replace the prompts with your case.
+3. Commit the single case file. [Open a pull request](https://github.com/Statsinference/Statistical-Intelligence-Arena/compare) with `main` as the base and your branch as the compare branch. Copy the [data contribution PR checklist](../.github/PULL_REQUEST_TEMPLATE/data-contribution.md) into the description.
+4. Check the **Website data contribution precheck** result and address any requested revisions in the same PR. A maintainer will assign a reviewer.
 
-## Public and private materials
+## Materials and access
 
-Every file and discussion in this repository is public. The PR can include a shareable case description, links to public sources and a DAG when it can be shared. For a protected design, describe the variable roles and assumptions at a level you can make public. For restricted data, link to the official access procedure when one is available. A maintainer will arrange private review of complete candidate-evaluation generators, exact parameters and seeds, case-specific truths, and restricted materials. Send sensitive files only through that agreed channel.
+The PR can include a case description, links to shareable sources and a DAG. For restricted data, link to the official access procedure when one is available. A maintainer will arrange access to protected candidate-evaluation generators, exact parameters and seeds, case-specific truths, and restricted data. Send sensitive files through that agreed channel.
 
 ## Review
 

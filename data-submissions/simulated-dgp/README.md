@@ -43,7 +43,7 @@ Public teaching examples can link authorized code and settings. For protected ev
 
 ## 3. Copy the Markdown template
 
-Copy the block into `data-submissions/simulated-dgp/submissions/<slug>.md`. Use a lowercase, hyphenated slug, keep the seven section headings in order and replace all placeholders. The same text is available as [TEMPLATE.md](TEMPLATE.md).
+Copy the block into `website/data-submissions/simulated-dgp/submissions/<slug>.md`. Use a lowercase, hyphenated slug, keep the seven section headings in order and replace all placeholders. The same text is available as [TEMPLATE.md](TEMPLATE.md).
 
 ```markdown
 # [TODO: Case title]
@@ -93,15 +93,15 @@ Copy the block into `data-submissions/simulated-dgp/submissions/<slug>.md`. Use 
 
 ## 4. Check and open the pull request
 
-1. [Fork the website repository](https://github.com/Statsinference/statsinference.github.io/fork) and create a branch from `main`. Add the single Markdown proposal.
-2. Check that the generation recipe reproduces the table schema and that the reference calculation produces the intended target. Verify that the public proposal contains only shareable materials.
+1. Create a branch from `main` in the [private StatArena repository](https://github.com/Statsinference/Statistical-Intelligence-Arena). Add the single Markdown proposal.
+2. Check that the generation recipe reproduces the table schema and that the reference calculation produces the intended target. Check the sharing terms of any materials you link or include.
 3. Run the format check from the repository root. Replace `your-design` with your file's slug.
 
    ```bash
-   python scripts/check_data_contribution.py --track simulated-dgp --local-file data-submissions/simulated-dgp/submissions/your-design.md
+   python website/scripts/check_data_contribution.py --track simulated-dgp --local-file website/data-submissions/simulated-dgp/submissions/your-design.md
    ```
 
-4. Open a pull request to the website repository's `main` and complete the [submission checklist](../../.github/PULL_REQUEST_TEMPLATE/data-contribution.md). Use the same PR for revisions. The automated check verifies the file and headings. A reviewer checks the design, the truth calculation and reproducibility. Evaluation inclusion is a separate curator decision.
+4. [Open a pull request](https://github.com/Statsinference/Statistical-Intelligence-Arena/compare) to `main` and complete the [submission checklist](../../.github/PULL_REQUEST_TEMPLATE/data-contribution.md). Use the same PR for revisions. The automated check verifies the file, headings and declared edge lists. A reviewer checks the design, the truth calculation and reproducibility. Evaluation inclusion is a separate curator decision.
 
 ## Worked public example
 

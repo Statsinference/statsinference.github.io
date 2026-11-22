@@ -1,6 +1,7 @@
 {
   "enabled": true,
-  "mode": "github-issue",
-  "repository": "Statsinference/statsinference.github.io",
+  "mode": "guide",
+  "repository": "Statsinference/Statistical-Intelligence-Arena",
+  "guide": "https://github.com/Statsinference/Statistical-Intelligence-Arena/blob/main/website/method-submissions/README.md",
   "folder": "method-submissions/received"
 }

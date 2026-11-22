@@ -2,9 +2,9 @@
 
 ## Assign and review
 
-1. A maintainer checks the PR scope and the **Data contribution precheck** result, then requests a GitHub review from someone familiar with the domain and design. Add a reproducibility reviewer when the design or access procedure warrants it.
+1. A maintainer checks the PR scope and the **Website data contribution precheck** result, then requests a GitHub review from someone familiar with the domain and design. Add a reproducibility reviewer when the design or access procedure warrants it.
 2. The reviewer checks the items below and uses **Request changes** for actionable revisions or **Approve** when satisfied. Ask the author to revise the same PR.
-3. A maintainer confirms that the public file can be shared before merging. A merged proposal is a public contribution record. Track inclusion and leaderboard release require a separate evaluation decision.
+3. A maintainer checks sharing permissions before merging. The merged proposal records the contribution in the private repository. Track inclusion and leaderboard release require a separate evaluation decision.
 
 ## Scientific and reproducibility checklist
 

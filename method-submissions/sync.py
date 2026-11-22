@@ -1,4 +1,4 @@
-"""Register public method submissions for review without fetching participant code."""
+"""Register method submissions for review without fetching participant code."""
 from __future__ import annotations
 from html import escape
 import json
@@ -8,8 +8,12 @@ from urllib.parse import quote, urlsplit
 import urllib.request
 from pathlib import Path
 
-SOURCE = 'Statsinference/statsinference.github.io'
+PRIVATE_SOURCE = 'Statsinference/Statistical-Intelligence-Arena'
+PUBLIC_SOURCE = 'Statsinference/statsinference.github.io'
+SOURCE = PRIVATE_SOURCE if os.environ.get('GITHUB_REPOSITORY') == PRIVATE_SOURCE else PUBLIC_SOURCE
 ROOT = Path(__file__).resolve().parent
+if SOURCE == PRIVATE_SOURCE:
+    ROOT = ROOT.parents[1] / 'method-submissions'
 DOMAINS = {'ate', 'cate', 'mediation', 'iv', 'proximal', 'did_sc', 'nonparametric_regression', 'quantile', 'semi_supervised', 'missing_data', 'unspecified'}
 DOMAIN_LABELS = {
     'Average Treatment Effect': 'ate',
@@ -166,9 +170,9 @@ def parse_issue(issue: dict) -> dict | None:
 
 
 def fetch_issues() -> list[dict]:
-    """Read only the fixed public intake repository, following all result pages."""
+    """Read only the configured intake repository, following all result pages."""
     headers = {'Accept': 'application/vnd.github+json', 'User-Agent': 'Statistical-Inference-Arena-Submission-Archive', 'X-GitHub-Api-Version': '2022-11-28'}
-    # Private mirror reads the public intake anonymously; no cross-repo credential is required.
+    # Send credentials only to the repository running this workflow.
     if os.environ.get('GITHUB_REPOSITORY') == SOURCE and os.environ.get('GITHUB_TOKEN'):
         headers['Authorization'] = 'Bearer ' + os.environ['GITHUB_TOKEN']
     issues = []

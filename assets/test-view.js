@@ -318,7 +318,7 @@ function methodDetails(r,index){
  if(r.status==='reviewed'){
   const url=ArenaMethodReferences.safeURL(r.method_url,'method');
   if(url)references.push(`<div><strong>Method</strong> <a class="method-reference-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Code or method card ↗</a></div>`);
-  references.push(`<div><strong>Submission</strong> <a class="method-reference-link" href="https://github.com/Statsinference/statsinference.github.io/issues/${r.issue_number}" target="_blank" rel="noopener noreferrer">#${r.issue_number} ↗</a></div>`);
+  references.push(`<div><strong>Submission</strong> <a class="method-reference-link" href="https://github.com/Statsinference/Statistical-Intelligence-Arena/issues/${r.issue_number}" target="_blank" rel="noopener noreferrer">#${r.issue_number} ↗</a></div>`);
  }
  const paper=ref?.paper,paperURL=ArenaMethodReferences.safeURL(paper?.url,'paper');
  if(paperURL)references.push(`<div><strong>Method reference</strong> <a class="method-reference-link" href="${esc(paperURL)}" target="_blank" rel="noopener noreferrer">${esc(paper.title||'Paper')} ↗</a>${paper.citation?`<p>${esc(paper.citation)}</p>`:''}</div>`);
@@ -514,7 +514,7 @@ function csvCell(v){let s=String(v??'');if(typeof v==='string'&&/^[=+@\t\r-]/.te
 $('#export-btn').addEventListener('click',()=>{
  const s=current();if(!s)return;const keys=['rank','domain','evaluation','method','configuration','source_method',...metricKeys,'approximate_metrics','tables','source_file','aggregation','variance_definition','timing','status'];
  const ranks=rankMap();
- const rr=sortedRows().map(r=>({...r,configuration:r.details?.configuration??r.configuration,rank:ranks.get(r),domain:task,evaluation:'Test',approximate_metrics:r.approximate_metrics.join(';'),source_file:r.status==='reviewed'?'https://github.com/Statsinference/statsinference.github.io/issues/'+r.issue_number:r.source?.file??s.source.file,aggregation:r.aggregation??s.aggregation,variance_definition:r.variance_definition??s.variance_definition,timing:r.status==='reviewed'?(finite(r.time_s)?'Mean per table; protocol in linked submission':'Not reported'):r.timing??s.timing}));
+ const rr=sortedRows().map(r=>({...r,configuration:r.details?.configuration??r.configuration,rank:ranks.get(r),domain:task,evaluation:'Test',approximate_metrics:r.approximate_metrics.join(';'),source_file:r.status==='reviewed'?'https://github.com/Statsinference/Statistical-Intelligence-Arena/issues/'+r.issue_number:r.source?.file??s.source.file,aggregation:r.aggregation??s.aggregation,variance_definition:r.variance_definition??s.variance_definition,timing:r.status==='reviewed'?(finite(r.time_s)?'Mean per table; protocol in linked submission':'Not reported'):r.timing??s.timing}));
  const text=[keys.join(','),...rr.map(r=>keys.map(k=>csvCell(r[k])).join(','))].join('\r\n');
  const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='statarena-'+task+'-test.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
