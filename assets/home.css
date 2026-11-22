@@ -64,8 +64,8 @@
   .home-workflow-copy .home-description{max-width:68ch;font-size:13px;line-height:1.85}
   .wf-node-labels text{font-size:23px}
   .wf-focus-label{font-size:26px}
-  .wf-focus-caption{font-size:15px}
-  .wf-diagnostic-label{font-size:15px;letter-spacing:.01em}
+  .wf-focus-caption{font-size:20px}
+  .wf-diagnostic-label{font-size:20px;letter-spacing:.01em}
 }
 @media(max-width:860px){.home-panel{padding-top:10px;min-height:calc(100vh - 100px)}.home-universities{gap:9px}.home-university{min-height:84px;padding:11px}.home-university img{max-height:55px}}
 @media(max-width:560px){.home-stage{padding-top:18px}.home-lead{font-size:20px}.home-universities{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.home-university{min-height:76px;padding:10px}.home-university img{max-height:52px}.home-next{margin-top:12px}}
