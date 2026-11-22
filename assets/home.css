@@ -18,17 +18,14 @@
 @media(max-width:560px){.home-kicker{font-size:9px}.home-hero h1{font-size:clamp(40px,12vw,50px);letter-spacing:-1.8px;margin:8px 0 12px}.home-lead{font-size:20px}.home-description{font-size:12px}.home-mark{width:70px;height:70px;border-radius:12px}.home-mark img{width:56px;height:56px;border-radius:8px}.home-panel{padding-top:30px}.home-next{margin-top:12px}}
 
 /* Institutional logo strip on Home only. Preserve marks without recoloring. */
-.home-universities{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:22px 0 4px}
-.home-university{display:flex;align-items:center;justify-content:center;min-width:0;min-height:90px;padding:8px 12px;border:0;border-radius:0;background:transparent;transition:opacity .18s,transform .18s}
-.home-university:hover{opacity:.78;transform:translateY(-2px)}
-.home-university img{display:block;width:auto;max-width:100%;height:auto;max-height:62px;object-fit:contain}
-.home-university:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-@media(max-width:860px){.home-universities{gap:9px}.home-university{min-height:84px;padding:11px}.home-university img{max-height:55px}}
-@media(max-width:560px){.home-universities{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.home-university{min-height:76px;padding:10px}.home-university img{max-height:52px}}
-.home-moore-threads{display:flex;justify-content:center;align-items:center;width:fit-content;max-width:100%;margin:8px auto 4px;padding:8px 12px;transition:opacity .18s,transform .18s}
-.home-moore-threads:hover{opacity:.78;transform:translateY(-2px)}
-.home-moore-threads:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.home-moore-threads img{display:block;width:160px;max-width:100%;height:auto}
+.home-logos{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:22px 0 4px}
+.home-logo-link{display:flex;align-items:center;justify-content:center;min-width:0;min-height:90px;padding:8px 12px;border:0;border-radius:0;background:transparent;transition:opacity .18s,transform .18s}
+.home-logo-link:hover{opacity:.78;transform:translateY(-2px)}
+.home-logo-link img{display:block;width:auto;max-width:100%;height:auto;max-height:62px;object-fit:contain}
+.home-logo-link:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:860px){.home-logos{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.home-logo-link{min-height:84px;padding:11px}.home-logo-link img{max-height:55px}}
+@media(max-width:560px){.home-logos{gap:8px}.home-logo-link{min-height:76px;padding:10px}.home-logo-link img{max-height:52px}}
+.home-moore-threads img{width:160px}
 .home-moore-threads .home-moore-threads-dark,:root[data-theme=dark] .home-moore-threads img{display:none}
 :root[data-theme=dark] .home-moore-threads .home-moore-threads-dark{display:block}
 
