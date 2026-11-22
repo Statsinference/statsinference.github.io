@@ -76,6 +76,7 @@
 .home-workflow svg .wf-focus-label{font:700 34px var(--body);fill:var(--wf-focus)}
 .home-workflow .wf-focus-underline{fill:none;stroke:var(--wf-focus);stroke-width:3.5;stroke-linecap:round}
 .home-workflow svg .wf-focus-caption{font:600 19px var(--body);fill:var(--wf-focus)}
+.home-workflow svg .wf-node-labels text,.home-workflow svg .wf-focus-label,.home-workflow svg .wf-focus-caption,.home-workflow svg .wf-diagnostic-label{stroke:var(--bg);stroke-width:6px;stroke-linejoin:round;paint-order:stroke fill}
 @media(max-width:760px){
   .home-workflow{width:100%;margin-bottom:20px}
   .home-workflow svg{width:760px;min-width:760px;max-width:none}
