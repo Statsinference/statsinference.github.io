@@ -12,7 +12,8 @@
 
 ## DAG and identification
 
-- **Variables and causal structure.** [TODO: Map observed and latent variables to their roles and available columns. Add a DAG or describe the directed relationships in text.]
+- **Variables and causal structure.** [TODO: Map observed and latent variables to their roles and available columns. If you include a diagram, use short labels such as `A (treatment)` or `U (unobserved confounder)` where applicable. Draw the arrows for the scenario shown and define the variables in prose.]
+- **DAG edges.** `[TODO: List comma-separated arrows, for example X -> M, M -> Y, X -> Y. Use none for an empty graph.]`
 - **Assumptions.** [TODO: State the assumptions that identify the target or explain which assumption the stress test deliberately violates.]
 
 ## Variables and data-generating process
@@ -21,6 +22,8 @@
 - **Draw order and scenarios.** [TODO: State the sampling order, the level of each draw (such as unit, cluster or time period), and what varies or stays fixed across scenarios.]
 
 ### Structural equations
+
+- **Structural parents.** `[TODO: List parent -> child arrows implied by the equations, using the same IDs and format as DAG edges. State any scenario-specific edge changes in prose.]`
 
 [TODO: Write the complete mathematical equations or conditional sampling distributions for all generated variables in draw order. Include deterministic transformations, link functions, error distributions and dependencies. Define every symbol and give time or cluster indices where relevant. Use named parameters for protected values and supply their exact settings in private review.]
 

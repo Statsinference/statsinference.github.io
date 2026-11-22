@@ -24,6 +24,12 @@ SUBMISSION_PATH = re.compile(
 REPOSITORY = re.compile(r"[a-zA-Z0-9-]+/[a-zA-Z0-9_.-]+\Z")
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 PLACEHOLDER = re.compile(r"\[\s*(?:todo|tbd|replace)\b", re.I)
+DAG_SECTION = "DAG and identification"
+VARIABLES_SECTION = "Variables and data-generating process"
+HEADING = re.compile(r" {0,3}(#{1,6})[ \t]+(.+?)\s*$")
+EDGE_FIELD = re.compile(r" {0,3}-[ \t]+\*\*(DAG edges|Structural parents)\.\*\*(.*)")
+NODE = r"[A-Za-z][A-Za-z0-9_]*"
+DIRECTED_EDGE = re.compile(rf"({NODE})\s*->\s*({NODE})")
 
 
 class ValidationError(ValueError):
@@ -39,11 +45,52 @@ def required_sections(track):
     return (
         "Research question",
         "Study design and data source",
-        "DAG and identification",
+        DAG_SECTION,
         *TRACK_SECTIONS[track],
         "Benchmark comparison",
         "Materials and access",
     )
+
+
+def parse_declared_edges(value, field):
+    inline = re.fullmatch(r"`([^`]+)`", value.strip())
+    if not inline:
+        raise ValidationError(f"Write {field} as one inline code span containing comma-separated "
+                              "arrows such as `X -> Y`, or `none`.")
+    contents = inline.group(1).strip()
+    edges = set()
+    if contents == "none":
+        return edges
+    for arrow in contents.split(","):
+        match = DIRECTED_EDGE.fullmatch(arrow.strip())
+        if not match:
+            raise ValidationError(f"Invalid arrow in {field}. Use `X -> Y` with node IDs starting "
+                                  "with a letter and containing only ASCII letters, digits, or underscores.")
+        parent, child = edge = match.groups()
+        if parent == child:
+            raise ValidationError(f"{field} contains a self-arrow `{parent} -> {child}`.")
+        if edge in edges:
+            raise ValidationError(f"{field} repeats `{parent} -> {child}`.")
+        edges.add(edge)
+    return edges
+
+
+def validate_simulated_structure(seen_structure, populated_structure, declarations):
+    if not seen_structure:
+        raise ValidationError(f"Add a `### Structural equations` subsection under `{VARIABLES_SECTION}`.")
+    if not populated_structure:
+        raise ValidationError("Fill the Structural equations subsection with its equations or explanation.")
+    for field, location in (("DAG edges", DAG_SECTION), ("Structural parents", "Structural equations")):
+        if field not in declarations:
+            raise ValidationError(f"Add `- **{field}.**` under `{location}`, followed by an inline edge list.")
+    dag, parents = declarations["DAG edges"], declarations["Structural parents"]
+    if dag != parents:
+        missing = []
+        for edges, field in ((dag - parents, "Structural parents"), (parents - dag, "DAG edges")):
+            if edges:
+                arrows = ", ".join(f"{parent} -> {child}" for parent, child in sorted(edges))
+                missing.append(f"Missing from {field}: `{arrows}`.")
+        raise ValidationError("The declared edge lists must match. " + " ".join(missing))
 
 
 def validate_markdown(raw, track):
@@ -72,27 +119,56 @@ def validate_markdown(raw, track):
     current = None
     fence = ""
     title_count = 0
+    simulated = track == "simulated-dgp"
+    in_structure = seen_structure = populated_structure = False
+    math_fence = False
+    declarations = {}
     for line in lines:
         marker = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
         if marker:
             run, suffix = marker.groups()
             if not fence:
                 fence = run
+                math_fence = in_structure and suffix.strip() == "math"
                 continue
             if run.startswith(fence) and not suffix.strip():
                 fence = ""
+                math_fence = False
                 continue
         if not fence and not line.startswith(("    ", "\t")):
-            heading = re.match(r" {0,3}(#{1,2})[ \t]+(.+?)\s*$", line)
+            heading = HEADING.fullmatch(line)
             if heading:
                 level, title = heading.groups()
                 title = re.sub(r"\s+#+$", "", title)
-                if level == "#":
-                    title_count += 1
-                current = title if level == "##" and title in required else None
-                if current:
-                    seen.append(current)
-                continue
+                if len(level) <= 2:
+                    if level == "#":
+                        title_count += 1
+                    current = title if level == "##" and title in required else None
+                    if current:
+                        seen.append(current)
+                    in_structure = False
+                    continue
+                if simulated:
+                    if level == "###":
+                        in_structure = current == VARIABLES_SECTION and title == "Structural equations"
+                        if in_structure:
+                            if seen_structure:
+                                raise ValidationError("Use the Structural equations subsection once.")
+                            seen_structure = True
+                    continue
+            if simulated:
+                declared = EDGE_FIELD.fullmatch(line)
+                if declared:
+                    field, value = declared.groups()
+                    if ((field == "DAG edges" and current == DAG_SECTION)
+                            or (field == "Structural parents" and in_structure)):
+                        if field in declarations:
+                            raise ValidationError(f"Declare {field} exactly once.")
+                        declarations[field] = parse_declared_edges(value, field)
+                elif in_structure and re.search(r"\w", line):
+                    populated_structure = True
+        elif math_fence and not (HEADING.fullmatch(line) or EDGE_FIELD.fullmatch(line)) and re.search(r"\w", line):
+            populated_structure = True
         if current and re.search(r"\w", line):
             populated[current] = True
     if fence:
@@ -105,6 +181,8 @@ def validate_markdown(raw, track):
     empty_sections = [title for title in required if not populated[title]]
     if empty_sections:
         raise ValidationError("Fill the following sections. " + ", ".join(empty_sections) + ".")
+    if simulated:
+        validate_simulated_structure(seen_structure, populated_structure, declarations)
 
 
 def in_submission_area(path):

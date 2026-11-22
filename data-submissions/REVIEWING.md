@@ -9,7 +9,8 @@
 ## Scientific and reproducibility checklist
 
 - **Target.** Is the population or design, estimand, comparison and output clear?
-- **Evidence.** Does the citation or source support the claimed setting? Do the time ordering, observed variables and assumptions support the proposed analysis? Does a supplied DAG agree with the generator or study design?
+- **Evidence.** Does the citation or source support the claimed setting? Do the time ordering, observed variables and assumptions support the proposed analysis? Does any real-data DAG agree with the study design?
+- **DAG and equations.** For simulations, do the declared DAG edges and structural parents match what the equations generate? Check the direction of each arrow, shared latent parents and scenario-specific changes. Verify that any diagram shows the listed arrows and uses short node labels.
 - **Simulation.** Are all variables defined, and do the structural equations specify every draw, transformation and dependency? Can the reviewer generate at least one table from a known configuration and check the estimand and reference value? Is each empirical calibration or design choice documented?
 - **Real data.** Can the reviewer follow the access and preparation process and verify variable roles? If a reference estimate is supplied, does it match the target, sample and analysis scale? Are its uncertainty and limitations reported?
 - **Benchmark.** Is the proposed comparison feasible with the documented input and output? Does the proposed metric match what repeated simulated draws or a real study can establish?

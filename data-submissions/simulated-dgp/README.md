@@ -16,11 +16,22 @@ Propose one reproducible simulation that mirrors a documented study or isolates 
 | --- | --- |
 | Research question | The statistical target, intended use and behavior under test. Explain why this question is worth adding to the benchmark. |
 | Study design and data source | The population or setting, unit of observation, relevant references and which settings are calibrated or introduced. Include the sampling structure and proposed table sizes. |
-| DAG and identification | Observed and latent variable roles, time ordering and identification assumptions. Use a DAG or describe who causes what. Document any intentional violations. |
-| Variables and data-generating process | The variable definitions and table schema, full structural equations, sampling order, dependencies and scenario settings. |
+| DAG and identification | Observed and latent variable roles, directed edges, time ordering and identification assumptions. Document any intentional violations. |
+| Variables and data-generating process | Variable definitions and table schema, full structural equations and their parent edges, sampling order, dependencies and scenario settings. |
 | Data-generating process and estimand | The treatment or contrast, estimand and its units, and the calculation used to verify the reference value. |
 | Benchmark comparison | Expected outputs, a baseline, shared inputs and scoring. Specify the number of attempted replicates, scenario weighting if relevant, and the treatment of failures. |
 | Materials and access | Shareable references and reproducibility instructions. For official evaluation candidates, identify the files available for private review. |
+
+### Match the DAG to the equations
+
+Use the same short variable IDs in the graph and equations. A diagram is optional. If you include one, show the arrows for the scenario it describes and label nodes with the ID and a short role such as `A (treatment)`, `Y (outcome)` or `U (unobserved confounder)` for a latent common cause. Put definitions and assumptions in the prose.
+
+List one arrow from every causal parent in an equation to the variable it generates. Include observed and latent parents, including shared latent causes. You may omit a disturbance from the arrow lists if it enters only one equation and you document its independence. Keep its distribution and role in the equations. If scenarios change an edge, list the union in both fields and say which scenarios omit the edge.
+
+Write each field on one line. Use variable IDs that start with an ASCII letter and contain only letters, digits or underscores. Use short aliases for longer column names. Put the comma-separated arrows inside backticks, use `parent -> child` for each arrow, and use `none` when there are no arrows. The two lists should match.
+
+- **DAG edges.** `X -> M, M -> Y, X -> Y`
+- **Structural parents.** `X -> M, M -> Y, X -> Y`
 
 ### Document generation and truth
 
@@ -49,7 +60,8 @@ Copy the block into `data-submissions/simulated-dgp/submissions/<slug>.md`. Use 
 
 ## DAG and identification
 
-- **Variables and causal structure.** [TODO: Map observed and latent variables to their roles and available columns. Add a DAG or describe the directed relationships in text.]
+- **Variables and causal structure.** [TODO: Map observed and latent variables to their roles and available columns. If you include a diagram, use short labels such as `A (treatment)` or `U (unobserved confounder)` where applicable. Draw the arrows for the scenario shown and define the variables in prose.]
+- **DAG edges.** `[TODO: List comma-separated arrows, for example X -> M, M -> Y, X -> Y. Use none for an empty graph.]`
 - **Assumptions.** [TODO: State the assumptions that identify the target or explain which assumption the stress test deliberately violates.]
 
 ## Variables and data-generating process
@@ -58,6 +70,8 @@ Copy the block into `data-submissions/simulated-dgp/submissions/<slug>.md`. Use 
 - **Draw order and scenarios.** [TODO: State the sampling order, the level of each draw (such as unit, cluster or time period), and what varies or stays fixed across scenarios.]
 
 ### Structural equations
+
+- **Structural parents.** `[TODO: List parent -> child arrows implied by the equations, using the same IDs and format as DAG edges. State any scenario-specific edge changes in prose.]`
 
 [TODO: Write the complete mathematical equations or conditional sampling distributions for all generated variables in draw order. Include deterministic transformations, link functions, error distributions and dependencies. Define every symbol and give time or cluster indices where relevant. Use named parameters for protected values and supply their exact settings in private review.]
 

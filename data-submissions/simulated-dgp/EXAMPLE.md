@@ -12,14 +12,16 @@ Guo, Li, Liu and Zeng use a DNA methylation study to motivate a semi-synthetic e
 
 ## DAG and identification
 
+- **DAG edges.** `X -> M, M -> Y, X -> Y`
+
 ```mermaid
 flowchart LR
-    X["Trauma score"] --> M["Methylation profile"]
-    M --> Y["Cortisol reactivity"]
+    X["X (exposure)"] --> M["M (mediator)"]
+    M --> Y["Y (outcome)"]
     X --> Y
 ```
 
-The observed exposure is `trauma_z`, the mediator is the vector of methylation probe columns, and the observed outcome is `cortisol_response`. The two simulation disturbances are independent of each other and of the fixed exposure design. When $c_1=0$, the arrow from the trauma score to the methylation profile is absent.
+The observed exposure is `trauma_z`, the mediator is the vector of methylation probe columns, and the observed outcome is `cortisol_response`. The arrow lists and diagram show the union across scenarios. The zero-effect scenario with $c_1=0$ omits `X -> M`.
 
 ## Variables and data-generating process
 
@@ -27,7 +29,9 @@ Each row represents one subject. The standardized exposure $X_i=x_i$ is fixed to
 
 ### Structural equations
 
-For every row $i$, draw $U_i$ and $\varepsilon_i$ independently. The draws are also independent across rows and across replicate tables. The fixed coefficient vector $\widehat{\Gamma}_X$ and outcome residual standard deviation $\widehat{\sigma}_Y$ come from the pinned snapshot. The code below constructs the outcome coefficient vector $\alpha_M$ using the 11 selected probes.
+- **Structural parents.** `X -> M, M -> Y, X -> Y`
+
+For every row $i$, draw $U_i$ and $\varepsilon_i$ independently of one another and the fixed exposure design. Each disturbance enters one equation and is omitted from the arrow lists. The draws are independent across rows and across replicate tables. The fixed coefficient vector $\widehat{\Gamma}_X$ and outcome residual standard deviation $\widehat{\sigma}_Y$ come from the pinned snapshot. The code below constructs the outcome coefficient vector $\alpha_M$ using the 11 selected probes.
 
 $$
 \begin{aligned}

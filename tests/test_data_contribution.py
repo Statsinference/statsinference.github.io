@@ -20,12 +20,21 @@ SIMULATED = "simulated-dgp"
 REAL = "real-data"
 BASE_REPO = "Statsinference/statsinference.github.io"
 PATH = f"data-submissions/{SIMULATED}/submissions/teaching-case.md"
+EDGES = "X -> M, M -> Y, X -> Y"
 
 
-def proposal(track=SIMULATED):
+def proposal(track=SIMULATED, dag_edges=EDGES, structural_parents=EDGES):
     body = ["# A single benchmark case"]
     for heading in required_sections(track):
-        body.append(f"## {heading}\nA short explanation with [a source](https://example.com).")
+        section = f"## {heading}\nA short explanation with [a source](https://example.com)."
+        if track == SIMULATED and heading == "DAG and identification":
+            section += f"\n\n- **DAG edges.** `{dag_edges}`"
+        if track == SIMULATED and heading == "Variables and data-generating process":
+            section += (
+                "\n\n### Structural equations\n\nM = X + E_M and Y = M + X + E_Y."
+                f"\n\n- **Structural parents.** `{structural_parents}`"
+            )
+        body.append(section)
     return "\n\n".join(body).encode()
 
 
@@ -82,11 +91,64 @@ class MarkdownTests(unittest.TestCase):
 
     def test_simulated_proposal_requires_variables_and_data_generating_process(self):
         heading = b"## Variables and data-generating process"
-        populated_section = heading + b"\nA short explanation with [a source](https://example.com).\n\n"
         raw = proposal()
-        self.assertIn(populated_section, raw)
+        start = raw.index(heading)
+        end = raw.index(b"## Data-generating process and estimand", start)
         with self.assertRaisesRegex(ValidationError, heading.decode().removeprefix("## ")):
-            validate_markdown(raw.replace(populated_section, b""), SIMULATED)
+            validate_markdown(raw[:start] + raw[end:], SIMULATED)
+
+    def test_matching_edges_accept_reordering_and_empty_graph(self):
+        validate_markdown(proposal(structural_parents="X->Y, X -> M, M   -> Y"), SIMULATED)
+        validate_markdown(proposal(dag_edges="none", structural_parents="none"), SIMULATED)
+
+    def test_matching_edges_accept_a_union_of_distinct_scenario_dags(self):
+        edges = "long_variable_name -> Y, Y -> long_variable_name"
+        validate_markdown(proposal(dag_edges=edges, structural_parents=edges), SIMULATED)
+
+    def test_mismatched_edges_identify_the_missing_arrows(self):
+        raw = proposal(structural_parents="Y -> X, X -> M, M -> Y")
+        message = r"Missing from Structural parents: `X -> Y`.*Missing from DAG edges: `Y -> X`"
+        with self.assertRaisesRegex(ValidationError, message):
+            validate_markdown(raw, SIMULATED)
+
+    def test_malformed_edges_are_rejected(self):
+        for edges, message in (
+            ("long variable name -> Y", "node IDs"),
+            ("X <- Y", "Invalid arrow"),
+            ("X -> X", "self-arrow"),
+            ("X -> Y, X->Y", "repeats"),
+        ):
+            with self.subTest(edges=edges), self.assertRaisesRegex(ValidationError, message):
+                validate_markdown(proposal(dag_edges=edges, structural_parents=edges), SIMULATED)
+
+    def test_structural_equations_require_visible_heading_and_body(self):
+        heading = b"### Structural equations"
+        body = b"M = X + E_M and Y = M + X + E_Y."
+        raw = proposal()
+        for draft, message in (
+            (raw.replace(heading, b"<!-- " + heading + b" -->"), r"Add a `### Structural equations`"),
+            (raw.replace(heading, b"```md\n" + heading + b"\n```"), r"Add a `### Structural equations`"),
+            (raw.replace(body, b"<!-- " + body + b" -->"), "Fill the Structural equations"),
+        ):
+            with self.subTest(message=message), self.assertRaisesRegex(ValidationError, message):
+                validate_markdown(draft, SIMULATED)
+
+    def test_github_math_fence_supplies_structural_equation_content(self):
+        raw = proposal().replace(
+            b"M = X + E_M and Y = M + X + E_Y.",
+            b"```math\nM = X + E_M\nY = M + X + E_Y\n```",
+        )
+        validate_markdown(raw, SIMULATED)
+
+    def test_edge_fields_must_be_visible_and_in_their_sections(self):
+        raw = proposal()
+        for field in ("DAG edges", "Structural parents"):
+            bullet = f"- **{field}.** `{EDGES}`".encode()
+            moved = raw.replace(bullet, b"") + b"\n\n" + bullet
+            for draft in (moved, raw.replace(bullet, b"<!-- " + bullet + b" -->"),
+                          raw.replace(bullet, b"```md\n" + bullet + b"\n```")):
+                with self.subTest(field=field), self.assertRaisesRegex(ValidationError, f"Add .*{field}"):
+                    validate_markdown(draft, SIMULATED)
 
 
 class PRPathTests(unittest.TestCase):
