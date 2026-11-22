@@ -562,6 +562,16 @@ with sync_playwright() as p:
         row.locator('.method-toggle').click()
         assert page.locator('#leaderboard tbody .method-details-row').count() == 0
 
+    page.locator('[data-t="ate"]').click()
+    ate_linear = page.locator('#leaderboard tbody tr[data-method="Linear"] .method-toggle')
+    ate_linear.click()
+    ate_details = page.locator('#' + ate_linear.get_attribute('aria-controls'))
+    assert ate_details.locator('.method-detail-grid > div').nth(1).locator('p').inner_text() == 'AIPW'
+    assert ate_details.get_by_role('row').filter(
+        has=page.get_by_role('rowheader', name='Estimator details', exact=True)
+    ).locator('td').inner_text() == 'Augmented inverse probability weighting'
+    ate_linear.click()
+
     # All expanded methods share aligned detail columns; compare their actual
     # screen positions rather than only checking they have the same labels.
     page.locator('[data-t="ate"]').click()

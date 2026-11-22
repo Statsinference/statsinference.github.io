@@ -211,7 +211,7 @@ function methodFacts(r,s){
    estimator:'IV-PFN v0.3',
    folds:'5 shared folds for the AIPW LATE ratio',
    bootstrap:'Not used',
-   settings:[level,['Interval construction','Influence-function standard errors']]
+   settings:[['Model version','IV-PFN v0.3'],level,['Interval construction','Influence-function standard errors']]
   };
  }
  if(s.id==='did-test-2026-11-16'){
@@ -269,6 +269,14 @@ function estimatorSummary(r,s,detail){
  if(s.domain==='iv'&&['IV-PFN','Random Forest'].includes(r.method))return 'AIPW LATE ratio';
  return detail.estimator;
 }
+const estimatorDescriptions=new Map([
+ ['AIPW','Augmented inverse probability weighting'],
+ ['T-learner','Fixed-query T-learner ensemble'],
+ ['Influence-function based estimator','Cross-fitted efficient influence function estimator for the natural indirect effect'],
+ ['Doubly robust DiD','Normalized doubly robust difference-in-differences estimator'],
+ ['Proximal GMM','Proximal series instrumental variables / sieve generalized method of moments'],
+ ['AIPW LATE ratio','Augmented inverse probability weighted ratio for the local average treatment effect']
+]);
 function foldsSummary(full,index){
  const outerInner=full.match(/^(\d+) [^;]*outer folds;\s*(\d+) inner(?: pseudo-label)? folds/);
  const count=full.match(/^(\d+)\b/);
@@ -310,7 +318,8 @@ function methodDetails(r,index){
  const provided=detail.settings??r.settings;
  const settings=Array.isArray(provided)?provided.filter(row=>Array.isArray(row)&&row.length===2&&row[0]&&row[1]):[];
  if(!settings.length)settings.push(['Settings',detail.configuration]);
- if(detail.estimator&&estimator!==detail.estimator)settings.unshift(['Estimator details',detail.estimator]);
+ const description=r.status==='reviewed'?detail.estimator:estimatorDescriptions.get(estimator)??detail.estimator;
+ if(description&&description!==estimator)settings.unshift(['Estimator details',description]);
  const configId='method-config-'+index;
  const configRows=settings.map(([label,value])=>`<tr><th scope="row">${esc(label)}</th><td>${esc(detailValue(value))}</td></tr>`).join('');
  const configuration=`<div class="method-detail-extra"><strong id="${configId}">Configuration</strong><div class="method-config-box"><table class="method-settings" aria-labelledby="${configId}"><tbody>${configRows}</tbody></table></div></div>`;
