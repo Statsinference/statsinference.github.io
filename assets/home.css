@@ -55,7 +55,7 @@
 
 /* User-provided StatArena workflow, displayed immediately above the Home statistics. */
 .home-workflow{
-  position:relative;z-index:1;margin:0 0 24px;max-width:100%;
+  position:relative;z-index:1;width:50%;max-width:660px;margin:0 auto 24px;
   --wf-canvas:var(--surface);--wf-border:var(--line-strong);
   --wf-header:#eee9e2;--wf-rule:var(--line);
   --wf-heading:var(--fg);--wf-flow:#577970;--wf-flow-secondary:#8da79c;
@@ -77,4 +77,4 @@
 .home-workflow svg text[font-size="23"]{font-size:23px;fill:var(--wf-heading)}
 .home-workflow svg text[font-size="26"]{font-size:26px;font-weight:700;fill:var(--wf-focus-text)}
 .home-workflow svg text[font-size="18"]{font-size:18px;font-weight:500;fill:var(--wf-focus-soft)}
-@media(max-width:760px){.home-workflow{margin-bottom:20px}.home-workflow svg{width:900px;min-width:900px;max-width:none}.home-workflow-scroll{border-radius:12px}}
+@media(max-width:760px){.home-workflow{width:100%;margin-bottom:20px}.home-workflow svg{width:900px;min-width:900px;max-width:none}.home-workflow-scroll{border-radius:12px}}
