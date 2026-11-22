@@ -53,31 +53,33 @@
 }
 
 
-/* User-provided StatArena workflow, displayed immediately above the Home statistics. */
+/* Open, unboxed workflow diagram beside the mission text. */
 .home-workflow{
   position:relative;z-index:1;width:100%;max-width:none;margin:0;
-  --wf-canvas:var(--surface);--wf-border:var(--line-strong);
-  --wf-header:#eee9e2;--wf-rule:var(--line);
-  --wf-heading:var(--fg);--wf-flow:#577970;--wf-flow-secondary:#8da79c;
-  --wf-node:#fffcf8;--wf-node-border:var(--line-strong);--wf-node-subtle:#eeeae4;
+  --wf-flow:#668b80;--wf-flow-secondary:#91a99f;
   --wf-node-text:var(--fg);--wf-focus:var(--accent);
-  --wf-focus-text:#ffffff;--wf-focus-soft:#e2f2eb;
+  --wf-diagnostic:#b4c4ba;--wf-diagnostic-text:#577970;
 }
 :root[data-theme=dark] .home-workflow{
-  --wf-canvas:var(--surface);--wf-border:var(--line);
-  --wf-header:#302e2b;--wf-rule:var(--line);
-  --wf-heading:var(--fg);--wf-flow:#9bb9b0;--wf-flow-secondary:#718f83;
-  --wf-node:#36332e;--wf-node-border:#625d54;--wf-node-subtle:#303b36;
-  --wf-node-text:var(--fg);--wf-focus:#327166;
-  --wf-focus-text:#fffef9;--wf-focus-soft:#daeee6;
+  --wf-flow:#95b8ac;--wf-flow-secondary:#7f9f93;
+  --wf-node-text:var(--fg);--wf-focus:var(--accent);
+  --wf-diagnostic:#57796e;--wf-diagnostic-text:#a6c7bb;
 }
-.home-workflow-scroll{max-width:100%;overflow-x:auto;overflow-y:hidden;border-radius:18px;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
-.home-workflow svg{display:block;width:100%;height:auto;min-width:0}
-.home-workflow svg text{font:600 25px var(--body);fill:var(--wf-node-text)}
-.home-workflow svg text[font-size="23"]{font-size:23px;fill:var(--wf-heading)}
-.home-workflow svg text[font-size="26"]{font-size:26px;font-weight:700;fill:var(--wf-focus-text)}
-.home-workflow svg text[font-size="18"]{font-size:18px;font-weight:500;fill:var(--wf-focus-soft)}
-@media(max-width:760px){.home-workflow{width:100%;margin-bottom:20px}.home-workflow svg{width:900px;min-width:900px;max-width:none}.home-workflow-scroll{border-radius:12px}}
+.home-workflow-scroll{max-width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+.home-workflow svg{display:block;width:100%;height:auto;min-width:0;overflow:visible}
+.home-workflow .wf-diagnostic-track{stroke:var(--wf-diagnostic);stroke-width:1.5;stroke-dasharray:3 7}
+.home-workflow .wf-diagnostic-track circle{fill:var(--wf-flow);stroke:none}
+.home-workflow svg .wf-diagnostic-label{font:600 20px var(--body);letter-spacing:.035em;fill:var(--wf-diagnostic-text)}
+.home-workflow .wf-connector{stroke:var(--wf-flow);stroke-width:2.4}
+.home-workflow .wf-optional-connector{stroke:var(--wf-flow-secondary);stroke-width:2.1;stroke-dasharray:5 7}
+.home-workflow svg .wf-node-labels text{font:600 29px var(--body);fill:var(--wf-node-text)}
+.home-workflow svg .wf-focus-label{font:700 34px var(--body);fill:var(--wf-focus)}
+.home-workflow .wf-focus-underline{fill:none;stroke:var(--wf-focus);stroke-width:3.5;stroke-linecap:round}
+.home-workflow svg .wf-focus-caption{font:600 19px var(--body);fill:var(--wf-focus)}
+@media(max-width:760px){
+  .home-workflow{width:100%;margin-bottom:20px}
+  .home-workflow svg{width:760px;min-width:760px;max-width:none}
+}
 
 /* Align the benchmark mission and the workflow diagram in a single editorial row. */
 .home-workflow-row{
