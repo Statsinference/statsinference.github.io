@@ -35,7 +35,7 @@
 #leaderboard .ranked-column{background:var(--accent-soft);color:var(--fg)}
 #leaderboard thead .ranked-column .sort-arrow{color:var(--accent)}
 #leaderboard .empty-cell{padding:36px 20px;color:var(--quiet);text-align:center;font-size:12px}
-#leaderboard tbody tr:last-child th{border-bottom:0}
+#leaderboard > tbody > tr:last-child > th{border-bottom:0}
 .leaderboard-wrap:empty{min-height:150px}
 .leaderboard-wrap:empty:before{content:'Loading results…';display:block;padding:25px;color:var(--muted);font-size:12px}
 .method-references a{overflow-wrap:anywhere}

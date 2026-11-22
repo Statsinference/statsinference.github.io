@@ -562,6 +562,18 @@ with sync_playwright() as p:
         row.locator('.method-toggle').click()
         assert page.locator('#leaderboard tbody .method-details-row').count() == 0
 
+        # The last outer row must not remove borders from the nested table.
+        last_toggle = page.locator('#leaderboard > tbody > tr[data-method]').last.locator('.method-toggle')
+        last_toggle.click()
+        last_detail = page.locator('#leaderboard > tbody > .method-details-row:last-child')
+        config_rows = last_detail.locator('.method-settings > tbody > tr')
+        assert config_rows.count() > 1, domain
+        assert config_rows.evaluate_all(
+            "(rows) => rows.every((row, i) => Array.from(row.cells).every(cell => "
+            "getComputedStyle(cell).borderBottomWidth === (i === rows.length - 1 ? '0px' : '1px')))"
+        ), domain
+        last_toggle.click()
+
     page.locator('[data-t="ate"]').click()
     ate_linear = page.locator('#leaderboard tbody tr[data-method="Linear"] .method-toggle')
     ate_linear.click()
