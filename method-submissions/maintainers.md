@@ -6,4 +6,4 @@ After checking the submission and its version, score its complete predictions CS
 python website/method-submissions/approve_mediation.py method-submissions/received/issue-000123.json /path/to/official-score.json --family other
 ```
 
-Choose `pfn` for an RFN-family entry or `other` for another estimator. Review the change to `website/data/mediation-reviewed.json`, then follow the [leaderboard publishing guide](../../docs/leaderboard-source.md). Repeating the command for the same issue updates its existing result.
+Choose `pfn` for a PFN-family entry or `other` for another estimator. Review the change to `website/data/mediation-reviewed.json`, then follow the [leaderboard publishing guide](../../docs/leaderboard-source.md). Repeating the command for the same issue updates its existing result.

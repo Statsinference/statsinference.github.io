@@ -32,7 +32,7 @@ let reviewedError=false;
 const expandedMethods=new Set();
 const domainSuites=()=>testSuites.filter(s=>s.domain===task);
 const current=()=>domainSuites()[0]||null;
-const familyNames={pfn:'RFN',classical:'Baseline',other:'Other methods'};
+const familyNames={pfn:'PFN',classical:'Baseline',other:'Other methods'};
 function displayMethodName(row){
  if(row.family!=='classical')return row.method;
  const name=row.method.replace(/ \+ GMM$/,'');

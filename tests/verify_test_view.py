@@ -469,7 +469,7 @@ with sync_playwright() as p:
     page.locator('#tab-ate').click()
     assert page.locator('#tab-ate').get_attribute('aria-selected') == 'true'
     assert page.locator('#rank-metric').input_value() == 'rmse'
-    assert page.locator('#fam-chips button').all_inner_texts() == ['All methods', 'RFN', 'Baseline']
+    assert page.locator('#fam-chips button').all_inner_texts() == ['All methods', 'PFN', 'Baseline']
     bronze = page.evaluate('rankDisplay(3)')
     assert 'rank-medal--bronze' in bronze and 'Rank 3 (bronze medal)' in bronze
     assert page.evaluate('rankDisplay(4)') == '4'
@@ -692,7 +692,7 @@ with sync_playwright() as p:
     assert_medals(page, next(s for s in suites if s['domain']=='iv'), 'rmse')
     assert page.locator('#leaderboard .rank-medal').first.get_attribute('aria-label') == 'Rank 2 (silver medal)'
     assert not page.locator('#arena-overview-stats').is_visible()
-    page.locator('[data-fam="pfn"]').click()
+    page.get_by_role('button', name='PFN', exact=True).click()
     assert page.locator('#leaderboard tbody tr[data-method]').count() == 1
     assert page.locator('#leaderboard .mname').inner_text() == 'IV-PFN'
     assert_medals(page, next(s for s in suites if s['domain']=='iv'), 'rmse')
