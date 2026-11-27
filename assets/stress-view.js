@@ -41,8 +41,8 @@
   let description='No stress-test results have been reported for this domain.';
   if(domain==='mediation'&&pending)description='Loading stress-test results…';
   else if(domain==='mediation'&&error)description='Stress-test results are temporarily unavailable.';
-  else if(domain==='mediation'&&data)description=data.suite.note;
-  const extra=domain==='mediation'&&data?`<p>${esc(data.suite.summaryNote)}</p><p>Nominal coverage: 95%. Coverage and interval length should be read together. This stress suite is separate from the official leaderboard.</p>`:'';
+  else if(domain==='mediation'&&data)description='';
+  const extra=domain==='mediation'&&data?`<p>${esc(data.suite.summaryNote)}</p>`:'';
   const body=rows.length?rows.map((row,index)=>{
    const id=identity(row),metric=data&&id?data.summary[id]:null;
    const open=metric&&expanded===id;
@@ -50,7 +50,7 @@
    const detail=open?methodDetail(id):'';
    return `<tr><th scope="row">${method}</th><td>${td(metric,'bias')}</td><td>${td(metric,'rmse')}</td><td>${td(metric,'coverage')}</td><td>${td(metric,'meanCiLength')}</td><td>${metric?esc(metric.n):'—'}</td></tr>${detail}`;
   }).join(''):'<tr><td class="stress-empty" colspan="6">No methods available —</td></tr>';
-  host.innerHTML=`<div class="stress-intro"><div><span class="stress-eyebrow">EXPLORATORY RESULTS</span><h2>${esc(title)}</h2><p>${esc(description)}</p>${extra}</div>${domain==='mediation'&&data?`<span class="stress-suite-count">${esc(data.suite.totalTables)} tables · ${esc(data.suite.caseCount)} cases</span>`:''}</div><div class="stress-table-wrap" role="region" tabindex="0" aria-label="Stress test summary"><table class="stress-table"><caption class="sr-only">Stress test summary by method</caption><thead><tr><th scope="col">Method</th><th scope="col">Bias</th><th scope="col">RMSE</th><th scope="col">95% coverage</th><th scope="col">Mean CI length</th><th scope="col">Tables</th></tr></thead><tbody>${body}</tbody></table></div><p class="stress-note">— Not reported. Select a method to explore the settings and cases.</p>`;
+  host.innerHTML=`<div class="stress-intro"><div><span class="stress-eyebrow">EXPLORATORY RESULTS</span><h2>${esc(title)}</h2>${description?`<p>${esc(description)}</p>`:''}${extra}</div>${domain==='mediation'&&data?`<span class="stress-suite-count">${esc(data.suite.totalTables)} tables · ${esc(data.suite.caseCount)} cases</span>`:''}</div><div class="stress-table-wrap" role="region" tabindex="0" aria-label="Stress test summary"><table class="stress-table"><caption class="sr-only">Stress test summary by method</caption><thead><tr><th scope="col">Method</th><th scope="col">Bias</th><th scope="col">RMSE</th><th scope="col">95% coverage</th><th scope="col">Mean CI length</th><th scope="col">Tables</th></tr></thead><tbody>${body}</tbody></table></div><p class="stress-note">— Not reported. Select a method to explore the settings and cases.</p>`;
  }
  function methodDetail(id){
   const method=data.methods.find(m=>m.id===id);if(!method)return '';
