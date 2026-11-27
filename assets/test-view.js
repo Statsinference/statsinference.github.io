@@ -471,6 +471,7 @@ function render(){
  $('#release-status').textContent=loadError?'RESULTS UNAVAILABLE':loaded?'TEST RESULTS':'LOADING RESULTS';
  $('#release-description').textContent=loadError;$('#release-description').hidden=!loadError;
  renderMetrics();document.body.dataset.testView=loaded?'ready':'loading';
+ document.dispatchEvent(new CustomEvent('arena:domain-render',{detail:{domain:task,suiteId:current()?.id||null,rows:current()?.rows||[],domainPage}}));
 }
 function readHash(){
  const raw=location.hash.slice(1),p=new URLSearchParams(raw),domain=p.get('domain');

@@ -1,0 +1,57 @@
+.benchmark-views{display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--line);margin:30px 0 14px}
+.benchmark-view{position:relative;padding:10px 0 12px;color:var(--muted);font:600 13px/1.3 var(--body);border:0;background:transparent;cursor:pointer}
+.benchmark-view.active{color:var(--accent)}
+.benchmark-view.active:after{position:absolute;content:'';height:2px;background:var(--accent);bottom:-1px;left:0;right:0}
+.benchmark-view:focus-visible,.stress-method-button:focus-visible,.stress-case-button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#stress-view{padding:4px 0 28px}
+#stress-view[hidden]{display:none!important}
+.stress-intro{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin:8px 0 20px}
+.stress-intro h2{font:500 26px/1.2 var(--display);color:var(--fg);margin:4px 0 9px}
+.stress-intro p{max-width:860px;margin:5px 0;color:var(--muted);font:12px/1.6 var(--body)}
+.stress-eyebrow{font:600 10px/1.5 var(--body);letter-spacing:.08em;color:var(--accent)}
+.stress-suite-count{color:var(--muted);font:11px/1.5 var(--mono);white-space:nowrap;margin-top:7px}
+.stress-table-wrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.stress-table{width:100%;min-width:760px;table-layout:fixed;border-collapse:collapse}
+.stress-table th,.stress-table td{padding:13px 14px;text-align:right;border-bottom:1px solid var(--line);color:var(--fg);font:12px/1.5 var(--mono);font-variant-numeric:tabular-nums;vertical-align:middle}
+.stress-table thead th{height:44px;font:500 11px/1.3 var(--body);color:var(--muted)}
+.stress-table th:first-child,.stress-table td:first-child{width:25%;text-align:left;font-family:var(--body)}
+.stress-table tbody tr:last-child>*{border-bottom:0}
+.stress-table .stress-empty{text-align:center;padding:30px;color:var(--muted);font-family:var(--body)}
+.stress-method-button,.stress-case-button{display:inline-flex;align-items:center;gap:9px;padding:2px 0;border:0;background:transparent;color:var(--accent);font:600 13px/1.4 var(--body);text-align:left;cursor:pointer}
+.stress-method-button:hover,.stress-case-button:hover{text-decoration:underline;text-underline-offset:3px}
+.stress-count{display:block;color:var(--muted);font:10px/1.4 var(--body);white-space:nowrap}
+.stress-note{margin:10px 0 0;color:var(--muted);font:11px/1.5 var(--body)}
+.stress-table .stress-detail-row>td,.stress-table .stress-case-detail-row>td{padding:0;text-align:left;font-family:var(--body);white-space:normal}
+.stress-method-detail{padding:22px 24px;border-left:3px solid var(--accent)}
+.stress-detail-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.stress-detail-heading h3{margin:0;color:var(--fg);font:600 15px/1.4 var(--body)}
+.stress-detail-heading p,.stress-mechanism-description,.stress-case-detail p{margin:5px 0 12px;color:var(--muted);font:12px/1.5 var(--body)}
+.stress-detail-heading label{color:var(--muted);font:600 11px/1.4 var(--body);white-space:nowrap}
+.stress-detail-heading select{margin-left:7px;padding:7px 27px 7px 9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:4px;color:var(--fg);font:12px var(--body)}
+.stress-cases-table th,.stress-cases-table td,.stress-comparison-table th,.stress-comparison-table td{padding:9px 11px}
+.stress-cases-table .stress-case-button{font-size:12px}
+.stress-case-detail{padding:18px 18px 20px;background:var(--bg)}
+.stress-case-detail h4{font:600 13px/1.4 var(--body);color:var(--fg);margin:0}
+.stress-documentation{margin-top:16px;border:1px solid var(--line);border-radius:5px;background:var(--surface)}
+.stress-documentation summary{padding:12px 14px;color:var(--accent);font:600 12px/1.4 var(--body);cursor:pointer}
+.stress-documentation summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stress-documentation-content{padding:2px 16px 18px;border-top:1px solid var(--line)}
+.stress-documentation-content h5{margin:15px 0 8px;color:var(--muted);font:600 10px/1.4 var(--body);text-transform:uppercase;letter-spacing:.06em}
+.stress-documentation-content>p{max-width:900px}
+.stress-dag{display:block;width:min(100%,680px);height:auto;margin:4px auto 8px;color:var(--accent)}
+.stress-dag-edges path{fill:none;stroke:currentColor;stroke-width:1.7}
+.stress-dag marker path{fill:var(--accent)}
+.stress-dag-nodes circle,.stress-dag-nodes rect{fill:var(--surface);stroke:var(--accent);stroke-width:1.7}
+.stress-dag-nodes text{fill:var(--fg);font:italic 19px var(--display)}
+.stress-dag-nodes rect+text{font:12px var(--body)}
+.stress-equations{border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.stress-equation{display:grid;grid-template-columns:minmax(100px,23%) minmax(0,1fr);border-bottom:1px solid var(--line)}
+.stress-equation:last-child{border-bottom:0}
+.stress-equation strong,.stress-equation span{padding:8px 11px;font:12px/1.6 var(--body);color:var(--fg)}
+.stress-equation strong{font-weight:600;color:var(--muted);background:var(--bg);border-right:1px solid var(--line)}
+.stress-equation span{overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--mono)}
+.stress-symbols{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse}
+.stress-symbols th,.stress-symbols td{padding:8px 11px!important;text-align:left!important;border-bottom:1px solid var(--line);font:12px/1.5 var(--body)!important;white-space:normal;overflow-wrap:anywhere}
+.stress-symbols th{width:23%!important;background:var(--bg);border-right:1px solid var(--line);color:var(--muted);font-weight:600!important}
+.stress-symbols tr:last-child>*{border-bottom:0}
+@media(max-width:700px){.benchmark-views{margin-top:22px}.stress-intro,.stress-detail-heading{display:block}.stress-suite-count{display:block;margin-top:10px}.stress-detail-heading select{margin-top:10px}.stress-method-detail{padding:16px 12px}.stress-case-detail{padding:14px 10px}}

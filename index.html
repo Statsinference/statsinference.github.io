@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="assets/release.css?v=counterfactual-notation-20261117">
 <link rel="stylesheet" href="assets/references.css?v=counterfactual-notation-20261117">
 <link rel="stylesheet" href="assets/test-view.css?v=table-dividers-20261122">
+<link rel="stylesheet" href="assets/stress-view.css?v=20261127">
 <link rel="stylesheet" href="assets/submit-method.css?v=direct-contribution-guide">
 <link rel="stylesheet" href="assets/comparison-charts.css?v=method-markers-20261122">
 <link rel="stylesheet" href="assets/domain-illustrations.css?v=domain-heading-left-20261121">
@@ -177,6 +178,7 @@
   <figure id="domain-illustration" class="domain-figure" aria-labelledby="domain-figure-title" hidden></figure>
 </header>
 <section id="coming-soon" class="coming-soon" role="status" hidden><h3>Coming soon</h3><p>Results for this research area are being prepared.</p></section>
+<nav id="benchmark-views" class="benchmark-views" aria-label="Benchmark views"><button type="button" class="benchmark-view active" data-benchmark-view="test" aria-pressed="true">Leaderboard</button><button type="button" class="benchmark-view" data-benchmark-view="stress" aria-pressed="false">Stress Test</button></nav>
 <section class="view-bar test-controls" aria-label="Leaderboard controls">
 <div class="chips" id="fam-chips" role="group" aria-label="Method family"><button class="chip on" data-fam="all" aria-pressed="true">All methods</button><button class="chip" data-fam="pfn" aria-pressed="false">PFN</button><button class="chip" data-fam="classical" aria-pressed="false">Baseline</button></div>
 <label class="rank-control" for="rank-metric">Rank by <select id="rank-metric" aria-label="Rank by metric"><option value="bias">Bias</option><option value="variance">Variance</option><option value="rmse" selected>RMSE</option><option value="length">Mean interval length</option><option value="coverage">Coverage</option><option value="time_s">Time</option></select></label>
@@ -184,6 +186,7 @@
 <button class="export" id="export-btn" disabled>Export CSV ↓</button>
 </section>
 <section id="table" aria-label="Leaderboard"><div id="leaderboard-wrap" class="leaderboard-wrap" tabindex="0" role="region" aria-label="Scrollable leaderboard" aria-live="polite"></div><p class="table-note" id="table-note"></p></section>
+<section id="stress-view" aria-label="Stress test results" hidden></section>
 </main>
 <section id="methodology" class="comparison-charts" aria-label="Result comparisons">
 <article class="comparison-card" aria-labelledby="rmse-time-title"><h3 id="rmse-time-title">RMSE vs Time</h3><div id="rmse-time-chart" class="comparison-plot"></div></article>
@@ -195,7 +198,8 @@
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <noscript><p class="noscript">Enable JavaScript to view the domain leaderboards. Source-reported results are available for Average Treatment Effect, Conditional Average Treatment Effect, Causal Mediation Analysis, Instrumental Variables, Proximal Causal Inference and Difference-in-Differences. <a href="data/results.json">Read the results data</a>.</p></noscript>
 <script src="assets/test-references.js?v=counterfactual-notation-20261117"></script>
-<script src="assets/test-view.js?v=pfn-label-20261125"></script>
+<script src="assets/test-view.js?v=stress-20261127"></script>
+<script src="assets/stress-view.js?v=20261127" defer></script>
 <script src="assets/arena-overview.js?v=stat-cards-20261117"></script>
 <script src="assets/layout.js?v=statarena-home-20261119"></script>
 <script src="assets/comparison-charts.js?v=method-markers-20261122"></script>
